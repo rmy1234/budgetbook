@@ -230,19 +230,9 @@
 }
 
 .month-number {
-  font-size: 24px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.month-label {
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 500;
-  opacity: 0.9;
-}
-
-.month-item.selected .month-label {
-  opacity: 1;
+  line-height: 1;
 }
 
 .date-picker-footer {
