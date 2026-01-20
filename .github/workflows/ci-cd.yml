@@ -1,0 +1,162 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: budgetbook
+  EKS_CLUSTER_NAME: budgetbook-cluster
+
+jobs:
+  backend-build:
+    name: Backend Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+      
+      - name: Build with Maven
+        run: mvn clean package -DskipTests
+      
+      - name: Run tests
+        run: mvn test
+      
+      - name: Build Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker build -t $ECR_REPOSITORY-backend:${{ github.sha }} .
+          docker tag $ECR_REPOSITORY-backend:${{ github.sha }} $ECR_REPOSITORY-backend:latest
+      
+      - name: Configure AWS credentials
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Push Docker image to ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push $ECR_REPOSITORY-backend:${{ github.sha }}
+          docker push $ECR_REPOSITORY-backend:latest
+
+  frontend-build:
+    name: Frontend Build & Test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./frontend/package-lock.json
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run linter
+        run: npm run lint
+      
+      - name: Run tests
+        run: npm run test -- --watch=false --browsers=ChromeHeadless
+      
+      - name: Build application
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: npm run build -- --configuration production
+      
+      - name: Build Docker image
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker build -t $ECR_REPOSITORY-frontend:${{ github.sha }} .
+          docker tag $ECR_REPOSITORY-frontend:${{ github.sha }} $ECR_REPOSITORY-frontend:latest
+      
+      - name: Configure AWS credentials
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Push Docker image to ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push $ECR_REPOSITORY-frontend:${{ github.sha }}
+          docker push $ECR_REPOSITORY-frontend:latest
+
+  deploy:
+    name: Deploy to EKS
+    needs: [backend-build, frontend-build]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+      
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+      
+      - name: Deploy Backend
+        run: |
+          sed -i "s|<AWS_ACCOUNT_ID>|${{ secrets.AWS_ACCOUNT_ID }}|g" kubernetes/backend-deployment.yaml
+          sed -i "s|<REGION>|${{ env.AWS_REGION }}|g" kubernetes/backend-deployment.yaml
+          kubectl apply -f kubernetes/backend-deployment.yaml
+      
+      - name: Deploy Frontend
+        run: |
+          sed -i "s|<AWS_ACCOUNT_ID>|${{ secrets.AWS_ACCOUNT_ID }}|g" kubernetes/frontend-deployment.yaml
+          sed -i "s|<REGION>|${{ env.AWS_REGION }}|g" kubernetes/frontend-deployment.yaml
+          kubectl apply -f kubernetes/frontend-deployment.yaml
+      
+      - name: Wait for rollout
+        run: |
+          kubectl rollout status deployment/budgetbook-backend -n budgetbook
+          kubectl rollout status deployment/budgetbook-frontend -n budgetbook

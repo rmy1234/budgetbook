@@ -1,0 +1,645 @@
+<div class="statistics-container">
+  <h2>통계</h2>
+
+  <mat-tab-group [(selectedIndex)]="selectedTab" (selectedTabChange)="onTabChange($event.index)">
+    <!-- 주별 통계 -->
+    <mat-tab label="주별">
+      <div class="tab-content">
+        <div class="filter-section">
+          <mat-form-field appearance="outline">
+            <mat-label>연도</mat-label>
+            <mat-select [(ngModel)]="selectedYear" (selectionChange)="loadWeeklyStatistics()">
+              <mat-option *ngFor="let year of years" [value]="year">
+                {{ year }}년
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>주차</mat-label>
+            <input matInput type="number" [(ngModel)]="selectedWeek" (ngModelChange)="loadWeeklyStatistics()" min="1" max="53">
+          </mat-form-field>
+        </div>
+
+        <div *ngIf="loadingWeekly" class="loading-container">
+          <mat-spinner></mat-spinner>
+        </div>
+
+        <div *ngIf="!loadingWeekly && !weeklyStats" class="empty-state">
+          <p>해당 기간의 기록이 없습니다</p>
+        </div>
+
+        <div *ngIf="!loadingWeekly && weeklyStats" class="stats-content">
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>주별 요약</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-grid">
+                <div class="summary-item income">
+                  <div class="label">총 수입</div>
+                  <div class="value">{{ formatAmount(weeklyStats.totalIncome) }}</div>
+                </div>
+                <div class="summary-item expense">
+                  <div class="label">총 지출</div>
+                  <div class="value">{{ formatAmount(weeklyStats.totalExpense) }}</div>
+                </div>
+                <div class="summary-item balance" [class.positive]="weeklyStats.balance >= 0" [class.negative]="weeklyStats.balance < 0">
+                  <div class="label">순수익</div>
+                  <div class="value">{{ formatAmount(weeklyStats.balance) }}</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="chart-card">
+            <mat-card-header>
+              <mat-card-title>일별 수입/지출 변화</mat-card-title>
+              <div class="chart-type-toggle">
+                <mat-button-toggle-group [(ngModel)]="weeklyChartType" aria-label="그래프 타입" hideSingleSelectionIndicator>
+                  <mat-button-toggle value="bar" title="막대 그래프">
+                    <mat-icon>bar_chart</mat-icon>
+                  </mat-button-toggle>
+                  <mat-button-toggle value="line" title="꺾은선 그래프">
+                    <mat-icon>show_chart</mat-icon>
+                  </mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
+            </mat-card-header>
+            <mat-card-content>
+              <!-- 막대 그래프 -->
+              <div class="bar-chart" *ngIf="weeklyChartType === 'bar'">
+                <div class="chart-wrapper">
+                  <div class="y-axis">
+                    <div *ngFor="let value of getYAxisValues(getMaxDailyAmount())" 
+                         class="y-axis-item"
+                         [style.top.%]="getBarYAxisPosition(value, getYAxisValues(getMaxDailyAmount())[0])">
+                      <span class="y-axis-label">{{ formatAxisAmount(value) }}</span>
+                      <span class="y-axis-line"></span>
+                    </div>
+                  </div>
+                  <div class="chart-area">
+                    <div class="chart-bars">
+                      <div *ngFor="let daily of weeklyStats.dailyExpenses" class="bar-group">
+                        <div class="bars">
+                          <div class="bar income-bar" 
+                               [style.height.%]="getBarHeight(daily.income, getYAxisValues(getMaxDailyAmount())[0])">
+                          </div>
+                          <div class="bar expense-bar" 
+                               [style.height.%]="getBarHeight(daily.expense, getYAxisValues(getMaxDailyAmount())[0])">
+                          </div>
+                        </div>
+                        <div class="tooltip">
+                          <div class="tooltip-title">{{ daily.date | date: 'MM/dd (E)' }}</div>
+                          <div class="tooltip-row income">수입: {{ formatAmount(daily.income) }}</div>
+                          <div class="tooltip-row expense">지출: {{ formatAmount(daily.expense) }}</div>
+                          <div class="tooltip-row balance" [class.positive]="daily.balance >= 0" [class.negative]="daily.balance < 0">
+                            합계: {{ formatAmount(daily.balance) }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="x-axis-wrapper">
+                  <div class="x-axis-spacer"></div>
+                  <div class="x-axis">
+                    <span *ngFor="let daily of weeklyStats.dailyExpenses" class="x-label">{{ getDayLabel(daily.date) }}</span>
+                  </div>
+                </div>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
+                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                </div>
+              </div>
+              <!-- 꺾은선 그래프 -->
+              <div class="line-chart" *ngIf="weeklyChartType === 'line'">
+                <div class="chart-wrapper">
+                  <div class="y-axis">
+                    <div *ngFor="let value of getYAxisValues(getMaxDailyAmount())" 
+                         class="y-axis-item"
+                         [style.top.%]="getUnifiedYAxisPosition(value, getYAxisValues(getMaxDailyAmount())[0])">
+                      <span class="y-axis-label">{{ formatAxisAmount(value) }}</span>
+                      <span class="y-axis-line"></span>
+                    </div>
+                  </div>
+                  <div class="chart-area">
+                    <svg viewBox="0 0 1000 200" preserveAspectRatio="none" class="line-svg">
+                      <polyline class="line income-line" [attr.points]="getDailyLinePoints('income')"></polyline>
+                      <polyline class="line expense-line" [attr.points]="getDailyLinePoints('expense')"></polyline>
+                    </svg>
+                    <div class="point-container">
+                      <div *ngFor="let daily of weeklyStats.dailyExpenses; let i = index" 
+                           class="point-group"
+                           [style.left.%]="getPointX(i, weeklyStats.dailyExpenses.length)">
+                        <div class="point income-point" 
+                             [style.bottom.%]="getUnifiedPointY(daily.income, getYAxisValues(getMaxDailyAmount())[0])">
+                        </div>
+                        <div class="point expense-point" 
+                             [style.bottom.%]="getUnifiedPointY(daily.expense, getYAxisValues(getMaxDailyAmount())[0])">
+                        </div>
+                        <div class="tooltip">
+                          <div class="tooltip-title">{{ daily.date | date: 'MM/dd (E)' }}</div>
+                          <div class="tooltip-row income">수입: {{ formatAmount(daily.income) }}</div>
+                          <div class="tooltip-row expense">지출: {{ formatAmount(daily.expense) }}</div>
+                          <div class="tooltip-row balance" [class.positive]="daily.balance >= 0" [class.negative]="daily.balance < 0">
+                            합계: {{ formatAmount(daily.balance) }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="x-axis-wrapper">
+                  <div class="x-axis-spacer"></div>
+                  <div class="x-axis">
+                    <span *ngFor="let daily of weeklyStats.dailyExpenses" class="x-label">{{ getDayLabel(daily.date) }}</span>
+                  </div>
+                </div>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
+                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <div class="category-cards-row">
+            <mat-card class="category-card" *ngIf="weeklyStats.categoryIncomes && weeklyStats.categoryIncomes.length > 0">
+              <mat-card-header>
+                <mat-card-title>카테고리별 수입</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="category-list">
+                  <div *ngFor="let category of weeklyStats.categoryIncomes" class="category-item">
+                    <div class="category-info">
+                      <span class="category-name">{{ category.categoryName }}</span>
+                      <span class="category-amount income">{{ formatAmount(category.amount) }}</span>
+                    </div>
+                    <div class="category-bar income">
+                      <div class="category-bar-fill income" [style.width.%]="category.percentage"></div>
+                    </div>
+                    <div class="category-percentage">{{ category.percentage | number:'1.1-1' }}%</div>
+                  </div>
+                </div>
+                <div *ngIf="weeklyStats.categoryIncomes.length === 0" class="empty-category">
+                  <p>수입 내역이 없습니다</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="category-card" *ngIf="weeklyStats.categoryExpenses && weeklyStats.categoryExpenses.length > 0">
+              <mat-card-header>
+                <mat-card-title>카테고리별 지출</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="category-list">
+                  <div *ngFor="let category of weeklyStats.categoryExpenses" class="category-item">
+                    <div class="category-info">
+                      <span class="category-name">{{ category.categoryName }}</span>
+                      <span class="category-amount expense">{{ formatAmount(category.amount) }}</span>
+                    </div>
+                    <div class="category-bar expense">
+                      <div class="category-bar-fill expense" [style.width.%]="category.percentage"></div>
+                    </div>
+                    <div class="category-percentage">{{ category.percentage | number:'1.1-1' }}%</div>
+                  </div>
+                </div>
+                <div *ngIf="weeklyStats.categoryExpenses.length === 0" class="empty-category">
+                  <p>지출 내역이 없습니다</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- 월별 통계 -->
+    <mat-tab label="월별">
+      <div class="tab-content">
+        <div class="filter-section">
+          <mat-form-field appearance="outline">
+            <mat-label>연도</mat-label>
+            <mat-select [(ngModel)]="selectedYear" (selectionChange)="loadMonthlyStatistics()">
+              <mat-option *ngFor="let year of years" [value]="year">
+                {{ year }}년
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>월</mat-label>
+            <mat-select [(ngModel)]="selectedMonth" (selectionChange)="loadMonthlyStatistics()">
+              <mat-option *ngFor="let month of months" [value]="month.value">
+                {{ month.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div *ngIf="loadingMonthly" class="loading-container">
+          <mat-spinner></mat-spinner>
+        </div>
+
+        <div *ngIf="!loadingMonthly && !monthlyStats" class="empty-state">
+          <p>해당 기간의 기록이 없습니다</p>
+        </div>
+
+        <div *ngIf="!loadingMonthly && monthlyStats" class="stats-content">
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>월별 요약</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-grid">
+                <div class="summary-item income">
+                  <div class="label">총 수입</div>
+                  <div class="value">{{ formatAmount(monthlyStats.totalIncome) }}</div>
+                </div>
+                <div class="summary-item expense">
+                  <div class="label">총 지출</div>
+                  <div class="value">{{ formatAmount(monthlyStats.totalExpense) }}</div>
+                </div>
+                <div class="summary-item balance" [class.positive]="monthlyStats.balance >= 0" [class.negative]="monthlyStats.balance < 0">
+                  <div class="label">순수익</div>
+                  <div class="value">{{ formatAmount(monthlyStats.balance) }}</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="chart-card" *ngIf="monthlyStats.weeklyExpenses && monthlyStats.weeklyExpenses.length > 0">
+            <mat-card-header>
+              <mat-card-title>주별 수입/지출 변화</mat-card-title>
+              <div class="chart-type-toggle">
+                <mat-button-toggle-group [(ngModel)]="monthlyChartType" aria-label="그래프 타입" hideSingleSelectionIndicator>
+                  <mat-button-toggle value="bar" title="막대 그래프">
+                    <mat-icon>bar_chart</mat-icon>
+                  </mat-button-toggle>
+                  <mat-button-toggle value="line" title="꺾은선 그래프">
+                    <mat-icon>show_chart</mat-icon>
+                  </mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
+            </mat-card-header>
+            <mat-card-content>
+              <!-- 막대 그래프 -->
+              <div class="bar-chart" *ngIf="monthlyChartType === 'bar'">
+                <div class="chart-wrapper">
+                  <div class="y-axis">
+                    <div *ngFor="let value of getYAxisValues(getMaxWeeklyAmount())" 
+                         class="y-axis-item"
+                         [style.top.%]="getBarYAxisPosition(value, getYAxisValues(getMaxWeeklyAmount())[0])">
+                      <span class="y-axis-label">{{ formatAxisAmount(value) }}</span>
+                      <span class="y-axis-line"></span>
+                    </div>
+                  </div>
+                  <div class="chart-area">
+                    <div class="chart-bars">
+                      <div *ngFor="let weekly of monthlyStats.weeklyExpenses" class="bar-group">
+                        <div class="bars">
+                          <div class="bar income-bar" 
+                               [style.height.%]="getBarHeight(weekly.income, getYAxisValues(getMaxWeeklyAmount())[0])">
+                          </div>
+                          <div class="bar expense-bar" 
+                               [style.height.%]="getBarHeight(weekly.expense, getYAxisValues(getMaxWeeklyAmount())[0])">
+                          </div>
+                        </div>
+                        <div class="tooltip">
+                          <div class="tooltip-title">{{ weekly.week }}주차</div>
+                          <div class="tooltip-subtitle">{{ weekly.startDate | date: 'MM/dd' }} ~ {{ weekly.endDate | date: 'MM/dd' }}</div>
+                          <div class="tooltip-row income">수입: {{ formatAmount(weekly.income) }}</div>
+                          <div class="tooltip-row expense">지출: {{ formatAmount(weekly.expense) }}</div>
+                          <div class="tooltip-row balance" [class.positive]="weekly.balance >= 0" [class.negative]="weekly.balance < 0">
+                            합계: {{ formatAmount(weekly.balance) }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="x-axis-wrapper">
+                  <div class="x-axis-spacer"></div>
+                  <div class="x-axis">
+                    <span *ngFor="let weekly of monthlyStats.weeklyExpenses" class="x-label">{{ getWeekLabel(weekly.week) }}</span>
+                  </div>
+                </div>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
+                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                </div>
+              </div>
+              <!-- 꺾은선 그래프 -->
+              <div class="line-chart" *ngIf="monthlyChartType === 'line'">
+                <div class="chart-wrapper">
+                  <div class="y-axis">
+                    <div *ngFor="let value of getYAxisValues(getMaxWeeklyAmount())" 
+                         class="y-axis-item"
+                         [style.top.%]="getUnifiedYAxisPosition(value, getYAxisValues(getMaxWeeklyAmount())[0])">
+                      <span class="y-axis-label">{{ formatAxisAmount(value) }}</span>
+                      <span class="y-axis-line"></span>
+                    </div>
+                  </div>
+                  <div class="chart-area">
+                    <svg viewBox="0 0 1000 200" preserveAspectRatio="none" class="line-svg">
+                      <polyline class="line income-line" [attr.points]="getWeeklyLinePoints('income')"></polyline>
+                      <polyline class="line expense-line" [attr.points]="getWeeklyLinePoints('expense')"></polyline>
+                    </svg>
+                    <div class="point-container">
+                      <div *ngFor="let weekly of monthlyStats.weeklyExpenses; let i = index" 
+                           class="point-group"
+                           [style.left.%]="getPointX(i, monthlyStats.weeklyExpenses.length)">
+                        <div class="point income-point" 
+                             [style.bottom.%]="getUnifiedPointY(weekly.income, getYAxisValues(getMaxWeeklyAmount())[0])">
+                        </div>
+                        <div class="point expense-point" 
+                             [style.bottom.%]="getUnifiedPointY(weekly.expense, getYAxisValues(getMaxWeeklyAmount())[0])">
+                        </div>
+                        <div class="tooltip">
+                          <div class="tooltip-title">{{ weekly.week }}주차</div>
+                          <div class="tooltip-subtitle">{{ weekly.startDate | date: 'MM/dd' }} ~ {{ weekly.endDate | date: 'MM/dd' }}</div>
+                          <div class="tooltip-row income">수입: {{ formatAmount(weekly.income) }}</div>
+                          <div class="tooltip-row expense">지출: {{ formatAmount(weekly.expense) }}</div>
+                          <div class="tooltip-row balance" [class.positive]="weekly.balance >= 0" [class.negative]="weekly.balance < 0">
+                            합계: {{ formatAmount(weekly.balance) }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="x-axis-wrapper">
+                  <div class="x-axis-spacer"></div>
+                  <div class="x-axis">
+                    <span *ngFor="let weekly of monthlyStats.weeklyExpenses" class="x-label">{{ getWeekLabel(weekly.week) }}</span>
+                  </div>
+                </div>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
+                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <div class="category-cards-row">
+            <mat-card class="category-card" *ngIf="monthlyStats.categoryIncomes && monthlyStats.categoryIncomes.length > 0">
+              <mat-card-header>
+                <mat-card-title>카테고리별 수입</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="category-list">
+                  <div *ngFor="let category of monthlyStats.categoryIncomes" class="category-item">
+                    <div class="category-info">
+                      <span class="category-name">{{ category.categoryName }}</span>
+                      <span class="category-amount income">{{ formatAmount(category.amount) }}</span>
+                    </div>
+                    <div class="category-bar income">
+                      <div class="category-bar-fill income" [style.width.%]="category.percentage"></div>
+                    </div>
+                    <div class="category-percentage">{{ category.percentage | number:'1.1-1' }}%</div>
+                  </div>
+                </div>
+                <div *ngIf="monthlyStats.categoryIncomes.length === 0" class="empty-category">
+                  <p>수입 내역이 없습니다</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="category-card">
+              <mat-card-header>
+                <mat-card-title>카테고리별 지출</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="category-list">
+                  <div *ngFor="let category of monthlyStats.categoryExpenses" class="category-item">
+                    <div class="category-info">
+                      <span class="category-name">{{ category.categoryName }}</span>
+                      <span class="category-amount expense">{{ formatAmount(category.amount) }}</span>
+                    </div>
+                    <div class="category-bar expense">
+                      <div class="category-bar-fill expense" [style.width.%]="category.percentage"></div>
+                    </div>
+                    <div class="category-percentage">{{ category.percentage | number:'1.1-1' }}%</div>
+                  </div>
+                </div>
+                <div *ngIf="monthlyStats.categoryExpenses.length === 0" class="empty-category">
+                  <p>지출 내역이 없습니다</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+
+    <!-- 연도별 통계 -->
+    <mat-tab label="연도별">
+      <div class="tab-content">
+        <div class="filter-section">
+          <mat-form-field appearance="outline">
+            <mat-label>연도</mat-label>
+            <mat-select [(ngModel)]="selectedYear" (selectionChange)="loadYearlyStatistics()">
+              <mat-option *ngFor="let year of years" [value]="year">
+                {{ year }}년
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div *ngIf="loadingYearly" class="loading-container">
+          <mat-spinner></mat-spinner>
+        </div>
+
+        <div *ngIf="!loadingYearly && !yearlyStats" class="empty-state">
+          <p>해당 기간의 기록이 없습니다</p>
+        </div>
+
+        <div *ngIf="!loadingYearly && yearlyStats" class="stats-content">
+          <mat-card class="summary-card">
+            <mat-card-header>
+              <mat-card-title>연도별 요약</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div class="summary-grid">
+                <div class="summary-item income">
+                  <div class="label">총 수입</div>
+                  <div class="value">{{ formatAmount(yearlyStats.totalIncome) }}</div>
+                </div>
+                <div class="summary-item expense">
+                  <div class="label">총 지출</div>
+                  <div class="value">{{ formatAmount(yearlyStats.totalExpense) }}</div>
+                </div>
+                <div class="summary-item balance" [class.positive]="yearlyStats.balance >= 0" [class.negative]="yearlyStats.balance < 0">
+                  <div class="label">순수익</div>
+                  <div class="value">{{ formatAmount(yearlyStats.balance) }}</div>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <mat-card class="chart-card">
+            <mat-card-header>
+              <mat-card-title>월별 수입/지출 변화</mat-card-title>
+              <div class="chart-type-toggle">
+                <mat-button-toggle-group [(ngModel)]="yearlyChartType" aria-label="그래프 타입" hideSingleSelectionIndicator>
+                  <mat-button-toggle value="bar" title="막대 그래프">
+                    <mat-icon>bar_chart</mat-icon>
+                  </mat-button-toggle>
+                  <mat-button-toggle value="line" title="꺾은선 그래프">
+                    <mat-icon>show_chart</mat-icon>
+                  </mat-button-toggle>
+                </mat-button-toggle-group>
+              </div>
+            </mat-card-header>
+            <mat-card-content>
+              <!-- 막대 그래프 -->
+              <div class="bar-chart yearly-chart" *ngIf="yearlyChartType === 'bar'">
+                <div class="chart-wrapper">
+                  <div class="y-axis">
+                    <div *ngFor="let value of getYAxisValues(getMaxMonthlyAmount())" 
+                         class="y-axis-item"
+                         [style.top.%]="getBarYAxisPosition(value, getYAxisValues(getMaxMonthlyAmount())[0])">
+                      <span class="y-axis-label">{{ formatAxisAmount(value) }}</span>
+                      <span class="y-axis-line"></span>
+                    </div>
+                  </div>
+                  <div class="chart-area">
+                    <div class="chart-bars">
+                      <div *ngFor="let monthly of yearlyStats.monthlyExpenses" class="bar-group">
+                        <div class="bars">
+                          <div class="bar income-bar" 
+                               [style.height.%]="getBarHeight(monthly.income, getYAxisValues(getMaxMonthlyAmount())[0])">
+                          </div>
+                          <div class="bar expense-bar" 
+                               [style.height.%]="getBarHeight(monthly.expense, getYAxisValues(getMaxMonthlyAmount())[0])">
+                          </div>
+                        </div>
+                        <div class="tooltip">
+                          <div class="tooltip-title">{{ selectedYear }}년 {{ monthly.month }}월</div>
+                          <div class="tooltip-row income">수입: {{ formatAmount(monthly.income) }}</div>
+                          <div class="tooltip-row expense">지출: {{ formatAmount(monthly.expense) }}</div>
+                          <div class="tooltip-row balance" [class.positive]="monthly.balance >= 0" [class.negative]="monthly.balance < 0">
+                            합계: {{ formatAmount(monthly.balance) }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="x-axis-wrapper">
+                  <div class="x-axis-spacer"></div>
+                  <div class="x-axis">
+                    <span *ngFor="let monthly of yearlyStats.monthlyExpenses" class="x-label">{{ getMonthLabel(monthly.month) }}</span>
+                  </div>
+                </div>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
+                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                </div>
+              </div>
+              <!-- 꺾은선 그래프 -->
+              <div class="line-chart yearly-chart" *ngIf="yearlyChartType === 'line'">
+                <div class="chart-wrapper">
+                  <div class="y-axis">
+                    <div *ngFor="let value of getYAxisValues(getMaxMonthlyAmount())" 
+                         class="y-axis-item"
+                         [style.top.%]="getUnifiedYAxisPosition(value, getYAxisValues(getMaxMonthlyAmount())[0])">
+                      <span class="y-axis-label">{{ formatAxisAmount(value) }}</span>
+                      <span class="y-axis-line"></span>
+                    </div>
+                  </div>
+                  <div class="chart-area">
+                    <svg viewBox="0 0 1000 200" preserveAspectRatio="none" class="line-svg">
+                      <polyline class="line income-line" [attr.points]="getMonthlyLinePoints('income')"></polyline>
+                      <polyline class="line expense-line" [attr.points]="getMonthlyLinePoints('expense')"></polyline>
+                    </svg>
+                    <div class="point-container">
+                      <div *ngFor="let monthly of yearlyStats.monthlyExpenses; let i = index" 
+                           class="point-group"
+                           [style.left.%]="getPointX(i, yearlyStats.monthlyExpenses.length)">
+                        <div class="point income-point" 
+                             [style.bottom.%]="getUnifiedPointY(monthly.income, getYAxisValues(getMaxMonthlyAmount())[0])">
+                        </div>
+                        <div class="point expense-point" 
+                             [style.bottom.%]="getUnifiedPointY(monthly.expense, getYAxisValues(getMaxMonthlyAmount())[0])">
+                        </div>
+                        <div class="tooltip">
+                          <div class="tooltip-title">{{ selectedYear }}년 {{ monthly.month }}월</div>
+                          <div class="tooltip-row income">수입: {{ formatAmount(monthly.income) }}</div>
+                          <div class="tooltip-row expense">지출: {{ formatAmount(monthly.expense) }}</div>
+                          <div class="tooltip-row balance" [class.positive]="monthly.balance >= 0" [class.negative]="monthly.balance < 0">
+                            합계: {{ formatAmount(monthly.balance) }}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="x-axis-wrapper">
+                  <div class="x-axis-spacer"></div>
+                  <div class="x-axis">
+                    <span *ngFor="let monthly of yearlyStats.monthlyExpenses" class="x-label">{{ getMonthLabel(monthly.month) }}</span>
+                  </div>
+                </div>
+                <div class="chart-legend">
+                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
+                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+
+          <div class="category-cards-row">
+            <mat-card class="category-card" *ngIf="yearlyStats.categoryIncomes && yearlyStats.categoryIncomes.length > 0">
+              <mat-card-header>
+                <mat-card-title>카테고리별 수입</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="category-list">
+                  <div *ngFor="let category of yearlyStats.categoryIncomes" class="category-item">
+                    <div class="category-info">
+                      <span class="category-name">{{ category.categoryName }}</span>
+                      <span class="category-amount income">{{ formatAmount(category.amount) }}</span>
+                    </div>
+                    <div class="category-bar income">
+                      <div class="category-bar-fill income" [style.width.%]="category.percentage"></div>
+                    </div>
+                    <div class="category-percentage">{{ category.percentage | number:'1.1-1' }}%</div>
+                  </div>
+                </div>
+                <div *ngIf="yearlyStats.categoryIncomes.length === 0" class="empty-category">
+                  <p>수입 내역이 없습니다</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+
+            <mat-card class="category-card" *ngIf="yearlyStats.categoryExpenses && yearlyStats.categoryExpenses.length > 0">
+              <mat-card-header>
+                <mat-card-title>카테고리별 지출</mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="category-list">
+                  <div *ngFor="let category of yearlyStats.categoryExpenses" class="category-item">
+                    <div class="category-info">
+                      <span class="category-name">{{ category.categoryName }}</span>
+                      <span class="category-amount expense">{{ formatAmount(category.amount) }}</span>
+                    </div>
+                    <div class="category-bar expense">
+                      <div class="category-bar-fill expense" [style.width.%]="category.percentage"></div>
+                    </div>
+                    <div class="category-percentage">{{ category.percentage | number:'1.1-1' }}%</div>
+                  </div>
+                </div>
+                <div *ngIf="yearlyStats.categoryExpenses.length === 0" class="empty-category">
+                  <p>지출 내역이 없습니다</p>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        </div>
+      </div>
+    </mat-tab>
+  </mat-tab-group>
+</div>

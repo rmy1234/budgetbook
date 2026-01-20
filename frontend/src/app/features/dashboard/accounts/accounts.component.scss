@@ -1,0 +1,70 @@
+.accounts-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  h2 {
+    margin-bottom: 24px;
+    color: #333;
+  }
+
+  .account-form-card,
+  .accounts-list-card {
+    margin-bottom: 24px;
+  }
+
+  .account-form-card {
+    mat-card-header {
+      padding-bottom: 6px;
+    }
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 16px;
+
+    // mat-form-field 하단 여백 제거
+    ::ng-deep mat-form-field {
+      .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .accounts-table {
+    width: 100%;
+
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 12px;
+    }
+
+    .positive {
+      color: #4caf50;
+      font-weight: 500;
+    }
+
+    .negative {
+      color: #f44336;
+      font-weight: 500;
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px;
+    color: #999;
+  }
+
+  .currency-prefix {
+    padding-left: 16px;
+  }
+}

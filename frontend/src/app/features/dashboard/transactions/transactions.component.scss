@@ -1,0 +1,60 @@
+.transactions-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  h2 {
+    margin-bottom: 24px;
+    color: #333;
+  }
+
+  .filter-card,
+  .transactions-list-card {
+    margin-bottom: 24px;
+  }
+
+  .filter-card {
+    mat-card-header {
+      padding-bottom: 6px;
+    }
+  }
+
+  .filter-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+
+    // mat-form-field 하단 여백 제거
+    ::ng-deep mat-form-field {
+      .mat-mdc-form-field-subscript-wrapper {
+        display: none;
+      }
+    }
+  }
+
+  .transactions-table {
+    width: 100%;
+
+    .mat-mdc-header-cell,
+    .mat-mdc-cell {
+      padding: 12px;
+    }
+
+    .income {
+      color: #4caf50;
+      font-weight: 500;
+    }
+
+    .expense {
+      color: #f44336;
+      font-weight: 500;
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 48px;
+    color: #999;
+  }
+}

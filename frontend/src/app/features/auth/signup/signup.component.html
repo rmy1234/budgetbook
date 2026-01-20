@@ -1,0 +1,75 @@
+<div class="signup-container">
+  <div class="signup-wrapper">
+    <h1 class="signup-title">회원가입</h1>
+    
+    <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
+      <input 
+        type="text" 
+        formControlName="name" 
+        placeholder="이름을 입력해주세요"
+        class="form-input"
+        [class.error]="signupForm.get('name')?.invalid && signupForm.get('name')?.touched">
+      
+      <input 
+        type="text" 
+        formControlName="email" 
+        placeholder="아이디를 입력해주세요"
+        class="form-input"
+        [class.error]="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
+      
+      <input 
+        type="password" 
+        formControlName="password" 
+        placeholder="비밀번호를 입력해주세요"
+        class="form-input"
+        [class.error]="signupForm.get('password')?.invalid && signupForm.get('password')?.touched">
+      
+      <input 
+        type="number" 
+        formControlName="age" 
+        placeholder="나이를 입력해주세요"
+        class="form-input"
+        [class.error]="signupForm.get('age')?.invalid && signupForm.get('age')?.touched">
+      
+      <div class="form-options">
+        <label class="checkbox-label">
+          <input 
+            type="checkbox" 
+            [(ngModel)]="secureConnection"
+            [ngModelOptions]="{standalone: true}"
+            (ngModelChange)="onSecureConnectionChange($event)"
+            class="checkbox-input">
+          <span class="checkbox-text">
+            보안접속
+            <span class="secure-indicator" *ngIf="secureConnection && isHttps" title="HTTPS 보안 연결 활성화">
+              🔒
+            </span>
+            <span class="secure-warning" *ngIf="secureConnection && !isHttps && !isLocalhost" title="HTTPS를 사용하는 것이 권장됩니다">
+              ⚠️
+            </span>
+          </span>
+        </label>
+        
+        <div class="links">
+          <a href="#" class="link">아이디 찾기</a>
+          <span class="separator">|</span>
+          <a href="#" class="link">비밀번호 찾기</a>
+        </div>
+      </div>
+      
+      <button 
+        type="submit" 
+        class="btn-primary"
+        [disabled]="signupForm.invalid || loading">
+        {{ loading ? '가입 중...' : '회원가입' }}
+      </button>
+      
+      <button 
+        type="button" 
+        class="btn-secondary"
+        routerLink="/auth/login">
+        로그인
+      </button>
+    </form>
+  </div>
+</div>

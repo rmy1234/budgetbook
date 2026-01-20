@@ -1,0 +1,93 @@
+<div class="accounts-container">
+  <h2>계좌 관리</h2>
+
+  <mat-card class="account-form-card">
+    <mat-card-header>
+      <mat-card-title>{{ isEditing ? '계좌 수정' : '계좌 등록' }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="accountForm" (ngSubmit)="onSubmit()">
+        <div class="form-row">
+          <mat-form-field appearance="outline">
+            <mat-label>은행명</mat-label>
+            <input matInput formControlName="bankName" [readonly]="isEditing" required>
+            <mat-error *ngIf="accountForm.get('bankName')?.hasError('required')">
+              은행명을 입력해주세요
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>별칭 (선택사항)</mat-label>
+            <input matInput formControlName="alias">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" *ngIf="!isEditing" class="balance-field">
+            <mat-label>초기 금액</mat-label>
+            <input matInput type="number" formControlName="balance" min="0" required>
+            <span matPrefix class="currency-prefix">₩&nbsp;</span>
+            <mat-error *ngIf="accountForm.get('balance')?.hasError('required')">
+              초기 금액을 입력해주세요
+            </mat-error>
+            <mat-error *ngIf="accountForm.get('balance')?.hasError('min')">
+              금액은 0 이상이어야 합니다
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-actions">
+          <button mat-raised-button color="primary" type="submit" [disabled]="accountForm.invalid">
+            {{ isEditing ? '수정' : '등록' }}
+          </button>
+          <button mat-button type="button" (click)="resetForm()" *ngIf="isEditing">
+            취소
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+
+  <mat-card class="accounts-list-card">
+    <mat-card-header>
+      <mat-card-title>등록된 계좌</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <table mat-table [dataSource]="accounts" class="accounts-table">
+        <ng-container matColumnDef="bankName">
+          <th mat-header-cell *matHeaderCellDef>은행명</th>
+          <td mat-cell *matCellDef="let account">{{ account.bankName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="alias">
+          <th mat-header-cell *matHeaderCellDef>별칭</th>
+          <td mat-cell *matCellDef="let account">{{ account.alias || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="balance">
+          <th mat-header-cell *matHeaderCellDef>잔액</th>
+          <td mat-cell *matCellDef="let account" [class.positive]="account.balance >= 0" [class.negative]="account.balance < 0">
+            {{ formatBalance(account.balance) }}
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>작업</th>
+          <td mat-cell *matCellDef="let account">
+            <button mat-icon-button color="primary" (click)="editAccount(account)" title="수정">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button color="warn" (click)="deleteAccount(account)" title="삭제">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+
+      <div *ngIf="accounts.length === 0" class="empty-state">
+        <p>등록된 계좌가 없습니다</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</div>

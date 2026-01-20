@@ -1,0 +1,54 @@
+<h2 mat-dialog-title>{{ data.transaction ? '거래 내역 수정' : '거래 내역 추가' }}</h2>
+<mat-dialog-content>
+  <form [formGroup]="transactionForm" class="transaction-form">
+    <mat-form-field appearance="outline">
+      <mat-label>거래 유형</mat-label>
+      <mat-select formControlName="type" (selectionChange)="onTypeChange()">
+        <mat-option value="INCOME">수입</mat-option>
+        <mat-option value="EXPENSE">지출</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>계좌</mat-label>
+      <mat-select formControlName="accountId">
+        <mat-option *ngFor="let account of accounts" [value]="account.id">
+          {{ account.alias }} ({{ account.bankName }})
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>카테고리</mat-label>
+      <mat-select formControlName="categoryId">
+        <mat-option *ngFor="let category of filteredCategories" [value]="category.id">
+          {{ category.name }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>금액</mat-label>
+      <input matInput type="text" formControlName="amount" placeholder="0" (input)="onAmountInput($event)">
+      <span matSuffix class="currency-suffix">원</span>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>메모</mat-label>
+      <input matInput formControlName="memo" placeholder="메모를 입력하세요">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>거래일시</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="transactionDate">
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">취소</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!transactionForm.valid">
+    저장
+  </button>
+</mat-dialog-actions>

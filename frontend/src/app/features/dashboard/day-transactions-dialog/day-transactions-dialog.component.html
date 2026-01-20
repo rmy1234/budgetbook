@@ -1,0 +1,48 @@
+<h2 mat-dialog-title>
+  {{ data.date | date:'yyyy년 MM월 dd일' }} 거래 내역
+</h2>
+<mat-dialog-content>
+  <div class="transactions-list" *ngIf="data.transactions.length > 0; else noTransactions">
+    <div class="transaction-item-wrapper">
+      <div *ngFor="let transaction of data.transactions" class="transaction-item">
+        <div class="transaction-content">
+          <div class="transaction-header">
+            <span class="category-name">{{ transaction.categoryName }}</span>
+            <mat-chip [class.income]="transaction.type === 'INCOME'" [class.expense]="transaction.type === 'EXPENSE'">
+              {{ transaction.type === 'INCOME' ? '수입' : '지출' }}
+            </mat-chip>
+          </div>
+          <div class="transaction-details">
+            <span class="amount" [class.income-amount]="transaction.type === 'INCOME'" [class.expense-amount]="transaction.type === 'EXPENSE'">
+              {{ transaction.type === 'INCOME' ? '+' : '-' }}{{ transaction.amount | number }}원
+            </span>
+            <span class="account">{{ transaction.accountBankName }}</span>
+          </div>
+          <div class="transaction-memo" *ngIf="transaction.memo">
+            {{ transaction.memo }}
+          </div>
+        </div>
+        <div class="action-buttons">
+          <button mat-icon-button (click)="editTransaction(transaction)" class="edit-button" title="수정">
+            <mat-icon>edit</mat-icon>
+          </button>
+          <button mat-icon-button (click)="deleteTransaction(transaction)" class="delete-button" title="삭제">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <ng-template #noTransactions>
+    <div class="no-transactions">
+      <p>이 날짜에 등록된 거래 내역이 없습니다.</p>
+    </div>
+  </ng-template>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onClose()">닫기</button>
+  <button mat-raised-button color="primary" (click)="addTransaction()">
+    <mat-icon>add</mat-icon>
+    거래 내역 추가
+  </button>
+</mat-dialog-actions>

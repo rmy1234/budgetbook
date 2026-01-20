@@ -1,0 +1,130 @@
+<div class="calendar-container">
+  <!-- 상단 헤더 -->
+  <div class="calendar-header">
+    <div class="month-navigation">
+      <button mat-icon-button type="button" (click)="previousPeriod()">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+      <div class="month-year-selector" (click)="toggleDatePicker($event)">
+        <span class="month-year">{{ formattedDate }}</span>
+        <mat-icon class="dropdown-icon" [class.rotated]="isDatePickerOpen">expand_more</mat-icon>
+      </div>
+      <div class="date-picker-overlay" *ngIf="isDatePickerOpen" (click)="closeDatePicker()">
+        <div class="date-picker-popover" (click)="$event.stopPropagation()">
+          <div class="date-picker-header">
+            <h3>날짜 선택</h3>
+            <button mat-icon-button class="close-button" (click)="closeDatePicker()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+          <div class="date-picker-content">
+            <div class="year-section">
+              <div class="section-header">
+                <span class="section-title">년도</span>
+                <div class="year-navigation">
+                  <button mat-icon-button (click)="scrollYears(-10)" class="nav-button">
+                    <mat-icon>keyboard_double_arrow_left</mat-icon>
+                  </button>
+                  <button mat-icon-button (click)="scrollYears(10)" class="nav-button">
+                    <mat-icon>keyboard_double_arrow_right</mat-icon>
+                  </button>
+                </div>
+              </div>
+              <div class="year-grid" #yearGrid>
+                <button 
+                  *ngFor="let year of visibleYears" 
+                  class="year-item"
+                  [class.selected]="year === tempSelectedYear"
+                  (click)="selectYear(year)"
+                >
+                  {{ year }}
+                </button>
+              </div>
+            </div>
+            <div class="month-section">
+              <div class="section-header">
+                <span class="section-title">월</span>
+              </div>
+              <div class="month-grid">
+                <button 
+                  *ngFor="let month of availableMonths; let i = index" 
+                  class="month-item"
+                  [class.selected]="i === tempSelectedMonth"
+                  (click)="selectMonth(i)"
+                >
+                  <span class="month-number">{{ i + 1 }}</span>
+                  <span class="month-label">{{ month.label }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="date-picker-footer">
+            <button mat-button (click)="goToToday()" class="today-button">
+              <mat-icon>today</mat-icon>
+              오늘로 이동
+            </button>
+            <button mat-raised-button color="primary" (click)="applyDateSelection()" class="apply-button">
+              적용
+            </button>
+          </div>
+        </div>
+      </div>
+      <button mat-icon-button type="button" (click)="nextPeriod()">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+    </div>
+
+    <!-- 카테고리 필터 탭 -->
+    <div class="category-tabs">
+      <mat-tab-group [(selectedIndex)]="selectedCategoryIndex" (selectedIndexChange)="onCategoryChange($event)" class="category-tab-group">
+        <mat-tab label="전체"></mat-tab>
+        <mat-tab *ngFor="let category of categories" [label]="category.name"></mat-tab>
+      </mat-tab-group>
+    </div>
+
+  </div>
+
+  <!-- 캘린더 그리드 -->
+  <div class="calendar-grid" *ngIf="viewMode === 'monthly'">
+    <div class="calendar-weekdays">
+      <div class="weekday" *ngFor="let day of weekdays" [class.sunday]="day === '일'" [class.saturday]="day === '토'">
+        {{ day }}
+      </div>
+    </div>
+    <div class="calendar-days">
+      <div 
+        *ngFor="let day of calendarDays" 
+        class="calendar-day"
+        [class.other-month]="!day.isCurrentMonth"
+        [class.today]="day.isToday"
+        [class.has-transactions]="day.transactions.length > 0"
+        (click)="onDayClick(day)"
+      >
+        <div 
+          class="day-number" 
+          [class.today-highlight]="day.isToday"
+          [class.sunday]="day.isSunday"
+          [class.saturday]="day.isSaturday"
+          [class.holiday]="day.isHoliday"
+        >{{ day.day }}</div>
+        <div class="day-transactions">
+          <div class="transaction-list">
+            <div 
+              *ngFor="let transaction of day.transactions.slice(0, 3)" 
+              class="transaction-item"
+              [class.income]="transaction.type === 'INCOME'"
+              [class.expense]="transaction.type === 'EXPENSE'"
+              [title]="transaction.categoryName + ': ' + (transaction.memo || '')"
+            >
+              <span class="transaction-text">{{ getTransactionDisplayText(transaction) }}</span>
+              <span class="transaction-amount">{{ formatAmount(transaction.amount, transaction.type) }}</span>
+            </div>
+          </div>
+          <div *ngIf="day.transactions.length > 3" class="more-transactions">
+            +{{ day.transactions.length - 3 }}개
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

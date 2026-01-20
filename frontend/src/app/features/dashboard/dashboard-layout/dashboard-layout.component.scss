@@ -1,0 +1,59 @@
+.dashboard-container {
+  height: 100vh;
+}
+
+.sidenav-header {
+  padding: 0 16px;
+  text-align: center;
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidenav-header h2 {
+  margin: 0;
+  line-height: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-clickable {
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.logo-clickable:hover {
+  color: #1976d2;
+}
+
+mat-nav-list a.active {
+  background-color: rgba(63, 81, 181, 0.15);
+}
+
+mat-nav-list a {
+  display: flex;
+  align-items: center;
+}
+
+mat-nav-list a mat-icon {
+  margin-right: 16px;
+  vertical-align: middle;
+}
+
+mat-nav-list a span {
+  display: inline-block;
+  vertical-align: middle;
+  line-height: 24px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.content {
+  padding: 24px;
+}
