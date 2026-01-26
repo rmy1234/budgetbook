@@ -1,0 +1,61 @@
+<!-- 플로팅 버튼 -->
+<button
+  mat-fab
+  class="ai-fab"
+  [class.active]="isOpen"
+  (click)="togglePanel()"
+  matTooltip="AI로 거래 추가"
+  matTooltipPosition="left">
+  <mat-icon>{{ isOpen ? 'close' : 'smart_toy' }}</mat-icon>
+</button>
+
+<!-- 입력 패널 -->
+<div class="ai-panel" [class.open]="isOpen">
+  <!-- 헤더 -->
+  <div class="ai-panel-header">
+    <div class="ai-icon">
+      <mat-icon>smart_toy</mat-icon>
+    </div>
+    <h3>무엇을 도와드릴까요?</h3>
+  </div>
+  
+  <!-- 예시 힌트 -->
+  <div class="ai-hints">
+    <div class="hint-item">
+      <mat-icon>restaurant</mat-icon>
+      <span>"점심에 김밥 5천원 먹었어"</span>
+    </div>
+    <div class="hint-item">
+      <mat-icon>account_balance_wallet</mat-icon>
+      <span>"이번달 월급 300만원 들어왔어"</span>
+    </div>
+  </div>
+
+  @if (errorMessage) {
+    <div class="ai-error">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ errorMessage }}</span>
+    </div>
+  }
+
+  <!-- 입력창 -->
+  <div class="ai-input-container">
+    <input
+      type="text"
+      class="ai-input"
+      [(ngModel)]="inputText"
+      (keydown)="onKeyDown($event)"
+      [disabled]="isLoading"
+      placeholder="거래 내용을 입력하세요...">
+    <button
+      class="ai-send-btn"
+      [disabled]="!inputText.trim() || isLoading"
+      (click)="onSubmit()">
+      @if (isLoading) {
+        <mat-spinner diameter="18"></mat-spinner>
+      } @else {
+        <mat-icon>arrow_upward</mat-icon>
+      }
+    </button>
+  </div>
+</div>

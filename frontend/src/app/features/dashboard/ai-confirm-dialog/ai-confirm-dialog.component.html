@@ -1,0 +1,83 @@
+<h2 mat-dialog-title>
+  <mat-icon class="title-icon">smart_toy</mat-icon>
+  AI 거래 확인
+</h2>
+
+<mat-dialog-content>
+  <div class="ai-result-summary">
+    <div class="result-chip" [class.income]="data.parseResult.type === 'INCOME'" [class.expense]="data.parseResult.type === 'EXPENSE'">
+      {{ data.parseResult.type === 'INCOME' ? '수입' : '지출' }}
+    </div>
+    <div class="result-amount">
+      {{ data.parseResult.amount | number }}원
+    </div>
+    <div class="result-category">
+      {{ data.parseResult.categoryName }}
+    </div>
+  </div>
+
+  <form [formGroup]="transactionForm" class="transaction-form">
+    <!-- 거래 유형 -->
+    <mat-form-field appearance="outline">
+      <mat-label>거래 유형</mat-label>
+      <mat-select formControlName="type" (selectionChange)="onTypeChange()">
+        <mat-option value="EXPENSE">지출</mat-option>
+        <mat-option value="INCOME">수입</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <!-- 계좌 선택 -->
+    <mat-form-field appearance="outline">
+      <mat-label>계좌</mat-label>
+      <mat-select formControlName="accountId">
+        @for (account of accounts; track account.id) {
+          <mat-option [value]="account.id">
+            {{ account.bankName }} - {{ account.alias }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <!-- 카테고리 -->
+    <mat-form-field appearance="outline">
+      <mat-label>카테고리</mat-label>
+      <mat-select formControlName="categoryId">
+        @for (category of filteredCategories; track category.id) {
+          <mat-option [value]="category.id">
+            <mat-icon>{{ category.icon || 'category' }}</mat-icon>
+            {{ category.name }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <!-- 금액 -->
+    <mat-form-field appearance="outline">
+      <mat-label>금액</mat-label>
+      <input matInput formControlName="amount" (input)="onAmountInput($event)" placeholder="0">
+      <span matTextSuffix>원</span>
+    </mat-form-field>
+
+    <!-- 날짜 -->
+    <mat-form-field appearance="outline">
+      <mat-label>날짜</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="transactionDate">
+      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+    </mat-form-field>
+
+    <!-- 메모 -->
+    <mat-form-field appearance="outline">
+      <mat-label>메모</mat-label>
+      <input matInput formControlName="memo" placeholder="메모 (선택)">
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()">취소</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!transactionForm.valid">
+    <mat-icon>check</mat-icon>
+    저장
+  </button>
+</mat-dialog-actions>

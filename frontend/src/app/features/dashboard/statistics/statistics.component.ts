@@ -50,6 +50,8 @@ export class StatisticsComponent implements OnInit {
   // 주간 통계
   weeklyStats: WeeklyStatistics | null = null;
   selectedWeek = this.getCurrentWeek();
+  selectedWeeklyMonth = new Date().getMonth() + 1;
+  availableWeeks: number[] = [];
   loadingWeekly = false;
   
   // 연간 통계
@@ -71,6 +73,7 @@ export class StatisticsComponent implements OnInit {
     { value: 11, label: '11월' },
     { value: 12, label: '12월' }
   ];
+  weeks: number[] = [];
 
   constructor(
     private statisticsService: StatisticsService,
@@ -80,9 +83,16 @@ export class StatisticsComponent implements OnInit {
     for (let i = currentYear - 5; i <= currentYear + 5; i++) {
       this.years.push(i);
     }
+    // 주차 배열 생성 (1주차부터 53주차까지) - 전체 주차 목록용
+    for (let i = 1; i <= 53; i++) {
+      this.weeks.push(i);
+    }
+    // 초기 선택 가능한 주차 계산
+    this.updateAvailableWeeks();
   }
 
   ngOnInit(): void {
+    this.updateAvailableWeeks();
     this.loadWeeklyStatistics();
     this.loadYearlyStatistics();
   }
@@ -92,6 +102,98 @@ export class StatisticsComponent implements OnInit {
     const start = new Date(now.getFullYear(), 0, 1);
     const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000));
     return Math.ceil((days + start.getDay() + 1) / 7);
+  }
+
+  // 선택된 연도와 월에 해당하는 주차 범위 계산 (월 기준으로 1주차부터 시작)
+  updateAvailableWeeks(): void {
+    const startDate = new Date(this.selectedYear, this.selectedWeeklyMonth - 1, 1);
+    const endDate = new Date(this.selectedYear, this.selectedWeeklyMonth, 0); // 해당 월의 마지막 날
+    
+    // 해당 월에 포함된 주의 개수 계산
+    const weeksInMonth = this.getWeeksInMonth(startDate, endDate);
+    
+    this.availableWeeks = [];
+    for (let week = 1; week <= weeksInMonth; week++) {
+      this.availableWeeks.push(week);
+    }
+    
+    // 선택된 주차가 유효한 범위를 벗어나면 첫 번째 주차로 설정
+    if (this.selectedWeek < 1 || this.selectedWeek > weeksInMonth) {
+      this.selectedWeek = 1;
+    }
+  }
+
+  // 해당 월에 포함된 주의 개수 계산
+  getWeeksInMonth(startDate: Date, endDate: Date): number {
+    // 월의 첫 번째 날이 속한 주의 시작일(월요일)
+    const firstDayOfWeek = startDate.getDay(); // 0: 일요일, 1: 월요일, ...
+    const firstMonday = new Date(startDate);
+    
+    // 첫 번째 월요일 찾기
+    if (firstDayOfWeek === 0) {
+      // 일요일이면 다음 월요일로
+      firstMonday.setDate(startDate.getDate() + 1);
+    } else if (firstDayOfWeek !== 1) {
+      // 월요일이 아니면 이전 월요일로
+      firstMonday.setDate(startDate.getDate() - (firstDayOfWeek - 1));
+    }
+    
+    // 월의 마지막 날이 속한 주의 마지막일(일요일)
+    const lastDayOfWeek = endDate.getDay(); // 0: 일요일, 1: 월요일, ...
+    const lastSunday = new Date(endDate);
+    
+    // 마지막 일요일 찾기
+    if (lastDayOfWeek !== 0) {
+      // 일요일이 아니면 다음 일요일로
+      lastSunday.setDate(endDate.getDate() + (7 - lastDayOfWeek));
+    }
+    
+    // 주의 개수 계산 (밀리초 단위 차이를 일 단위로 변환 후 7로 나눔)
+    const daysDiff = Math.floor((lastSunday.getTime() - firstMonday.getTime()) / (24 * 60 * 60 * 1000));
+    const weeks = Math.floor(daysDiff / 7) + 1;
+    
+    return weeks;
+  }
+
+  // 특정 날짜의 주차 번호 계산 (연도 기준)
+  getWeekNumber(date: Date): number {
+    const startOfYear = new Date(date.getFullYear(), 0, 1);
+    const days = Math.floor((date.getTime() - startOfYear.getTime()) / (24 * 60 * 60 * 1000));
+    return Math.ceil((days + startOfYear.getDay() + 1) / 7);
+  }
+
+  // 월 기준 주차를 연도 기준 주차로 변환
+  getYearWeekFromMonthWeek(monthWeek: number): number {
+    const startDate = new Date(this.selectedYear, this.selectedWeeklyMonth - 1, 1);
+    // 월의 첫 번째 주를 찾기
+    const firstDayOfWeek = startDate.getDay();
+    let firstWeekStart = new Date(startDate);
+    
+    // 첫 번째 월요일 찾기
+    if (firstDayOfWeek === 0) {
+      firstWeekStart.setDate(startDate.getDate() + 1);
+    } else if (firstDayOfWeek !== 1) {
+      firstWeekStart.setDate(startDate.getDate() - (firstDayOfWeek - 1));
+    }
+    
+    // 선택된 주차의 시작일 계산
+    const targetWeekStart = new Date(firstWeekStart);
+    targetWeekStart.setDate(firstWeekStart.getDate() + (monthWeek - 1) * 7);
+    
+    // 연도 기준 주차 계산
+    return this.getWeekNumber(targetWeekStart);
+  }
+
+  // 주별 통계용 연도 변경 핸들러
+  onWeeklyYearChange(): void {
+    this.updateAvailableWeeks();
+    this.loadWeeklyStatistics();
+  }
+
+  // 주별 통계용 월 변경 핸들러
+  onWeeklyMonthChange(): void {
+    this.updateAvailableWeeks();
+    this.loadWeeklyStatistics();
   }
 
   onTabChange(index: number): void {
@@ -122,7 +224,9 @@ export class StatisticsComponent implements OnInit {
 
   loadWeeklyStatistics(): void {
     this.loadingWeekly = true;
-    this.statisticsService.getWeeklyStatistics(this.selectedYear, this.selectedWeek).subscribe({
+    // 월 기준 주차를 연도 기준 주차로 변환
+    const yearWeek = this.getYearWeekFromMonthWeek(this.selectedWeek);
+    this.statisticsService.getWeeklyStatistics(this.selectedYear, yearWeek).subscribe({
       next: (stats) => {
         this.weeklyStats = stats;
         this.loadingWeekly = false;

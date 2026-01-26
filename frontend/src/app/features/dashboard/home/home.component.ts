@@ -37,6 +37,12 @@ export class HomeComponent implements OnInit, OnDestroy {
       return;
     }
     this.loadTransactions();
+    
+    // 거래 변경 이벤트 구독
+    const changeSub = this.transactionService.transactionChanged$.subscribe(() => {
+      this.loadTransactions();
+    });
+    this.subscriptions.add(changeSub);
   }
 
   ngOnDestroy(): void {

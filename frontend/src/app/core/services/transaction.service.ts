@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { map, tap, delay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { AccountService } from './account.service';
@@ -42,11 +42,20 @@ export interface TransactionPage {
 })
 export class TransactionService {
   private apiUrl = `${environment.apiUrl}/transactions`;
+  
+  // 거래 변경 이벤트를 알리는 Subject
+  private transactionChangedSubject = new Subject<void>();
+  transactionChanged$ = this.transactionChangedSubject.asObservable();
 
   constructor(
     private http: HttpClient,
     private accountService: AccountService
   ) {}
+
+  // 거래 변경 이벤트 발생
+  notifyTransactionChanged(): void {
+    this.transactionChangedSubject.next();
+  }
 
   getTransactions(accountId?: number, page: number = 0, size: number = 20): Observable<TransactionPage> {
     let params = new HttpParams()
@@ -86,9 +95,10 @@ export class TransactionService {
       .pipe(
         map(response => response.data),
         tap(() => {
-          // 거래 완료 후 강제로 계좌 목록 새로고침
+          // 거래 완료 후 강제로 계좌 목록 새로고침 및 이벤트 발생
           setTimeout(() => {
             this.accountService.forceRefreshAccounts().subscribe();
+            this.notifyTransactionChanged();
           }, 100);
         })
       );
@@ -99,9 +109,10 @@ export class TransactionService {
       .pipe(
         map(response => response.data),
         tap(() => {
-          // 거래 수정 후 강제로 계좌 목록 새로고침
+          // 거래 수정 후 강제로 계좌 목록 새로고침 및 이벤트 발생
           setTimeout(() => {
             this.accountService.forceRefreshAccounts().subscribe();
+            this.notifyTransactionChanged();
           }, 100);
         })
       );
@@ -111,9 +122,10 @@ export class TransactionService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`)
       .pipe(
         tap(() => {
-          // 거래 삭제 후 강제로 계좌 목록 새로고침
+          // 거래 삭제 후 강제로 계좌 목록 새로고침 및 이벤트 발생
           setTimeout(() => {
             this.accountService.forceRefreshAccounts().subscribe();
+            this.notifyTransactionChanged();
           }, 100);
         })
       );

@@ -8,7 +8,7 @@
         <div class="filter-section">
           <mat-form-field appearance="outline">
             <mat-label>연도</mat-label>
-            <mat-select [(ngModel)]="selectedYear" (selectionChange)="loadWeeklyStatistics()">
+            <mat-select [(ngModel)]="selectedYear" (selectionChange)="onWeeklyYearChange()">
               <mat-option *ngFor="let year of years" [value]="year">
                 {{ year }}년
               </mat-option>
@@ -16,8 +16,21 @@
           </mat-form-field>
 
           <mat-form-field appearance="outline">
+            <mat-label>월</mat-label>
+            <mat-select [(ngModel)]="selectedWeeklyMonth" (selectionChange)="onWeeklyMonthChange()">
+              <mat-option *ngFor="let month of months" [value]="month.value">
+                {{ month.label }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
             <mat-label>주차</mat-label>
-            <input matInput type="number" [(ngModel)]="selectedWeek" (ngModelChange)="loadWeeklyStatistics()" min="1" max="53">
+            <mat-select [(ngModel)]="selectedWeek" (selectionChange)="loadWeeklyStatistics()">
+              <mat-option *ngFor="let week of availableWeeks" [value]="week">
+                {{ week }}주차
+              </mat-option>
+            </mat-select>
           </mat-form-field>
         </div>
 

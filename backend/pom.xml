@@ -87,6 +87,12 @@
             <artifactId>commons-pool2</artifactId>
         </dependency>
         
+        <!-- WebFlux for WebClient (Gemini API calls) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+        </dependency>
+        
         <!-- Lombok -->
         <dependency>
             <groupId>org.projectlombok</groupId>
