@@ -96,16 +96,18 @@
                       <div *ngFor="let daily of weeklyStats.dailyExpenses" class="bar-group">
                         <div class="bars">
                           <div class="bar income-bar" 
+                               *ngIf="showWeeklyIncome"
                                [style.height.%]="getBarHeight(daily.income, getYAxisValues(getMaxDailyAmount())[0])">
                           </div>
                           <div class="bar expense-bar" 
+                               *ngIf="showWeeklyExpense"
                                [style.height.%]="getBarHeight(daily.expense, getYAxisValues(getMaxDailyAmount())[0])">
                           </div>
                         </div>
                         <div class="tooltip">
                           <div class="tooltip-title">{{ daily.date | date: 'MM/dd (E)' }}</div>
-                          <div class="tooltip-row income">수입: {{ formatAmount(daily.income) }}</div>
-                          <div class="tooltip-row expense">지출: {{ formatAmount(daily.expense) }}</div>
+                          <div class="tooltip-row income" *ngIf="showWeeklyIncome">수입: {{ formatAmount(daily.income) }}</div>
+                          <div class="tooltip-row expense" *ngIf="showWeeklyExpense">지출: {{ formatAmount(daily.expense) }}</div>
                           <div class="tooltip-row balance" [class.positive]="daily.balance >= 0" [class.negative]="daily.balance < 0">
                             합계: {{ formatAmount(daily.balance) }}
                           </div>
@@ -121,8 +123,12 @@
                   </div>
                 </div>
                 <div class="chart-legend">
-                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
-                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                  <span class="legend-item clickable" [class.disabled]="!showWeeklyIncome" (click)="toggleWeeklyIncome()">
+                    <span class="legend-color income"></span>수입
+                  </span>
+                  <span class="legend-item clickable" [class.disabled]="!showWeeklyExpense" (click)="toggleWeeklyExpense()">
+                    <span class="legend-color expense"></span>지출
+                  </span>
                 </div>
               </div>
               <!-- 꺾은선 그래프 -->
@@ -138,23 +144,25 @@
                   </div>
                   <div class="chart-area">
                     <svg viewBox="0 0 1000 200" preserveAspectRatio="none" class="line-svg">
-                      <polyline class="line income-line" [attr.points]="getDailyLinePoints('income')"></polyline>
-                      <polyline class="line expense-line" [attr.points]="getDailyLinePoints('expense')"></polyline>
+                      <polyline *ngIf="showWeeklyIncome" class="line income-line" [attr.points]="getDailyLinePoints('income')"></polyline>
+                      <polyline *ngIf="showWeeklyExpense" class="line expense-line" [attr.points]="getDailyLinePoints('expense')"></polyline>
                     </svg>
                     <div class="point-container">
                       <div *ngFor="let daily of weeklyStats.dailyExpenses; let i = index" 
                            class="point-group"
                            [style.left.%]="getPointX(i, weeklyStats.dailyExpenses.length)">
                         <div class="point income-point" 
+                             *ngIf="showWeeklyIncome"
                              [style.bottom.%]="getUnifiedPointY(daily.income, getYAxisValues(getMaxDailyAmount())[0])">
                         </div>
                         <div class="point expense-point" 
+                             *ngIf="showWeeklyExpense"
                              [style.bottom.%]="getUnifiedPointY(daily.expense, getYAxisValues(getMaxDailyAmount())[0])">
                         </div>
                         <div class="tooltip">
                           <div class="tooltip-title">{{ daily.date | date: 'MM/dd (E)' }}</div>
-                          <div class="tooltip-row income">수입: {{ formatAmount(daily.income) }}</div>
-                          <div class="tooltip-row expense">지출: {{ formatAmount(daily.expense) }}</div>
+                          <div class="tooltip-row income" *ngIf="showWeeklyIncome">수입: {{ formatAmount(daily.income) }}</div>
+                          <div class="tooltip-row expense" *ngIf="showWeeklyExpense">지출: {{ formatAmount(daily.expense) }}</div>
                           <div class="tooltip-row balance" [class.positive]="daily.balance >= 0" [class.negative]="daily.balance < 0">
                             합계: {{ formatAmount(daily.balance) }}
                           </div>
@@ -170,8 +178,12 @@
                   </div>
                 </div>
                 <div class="chart-legend">
-                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
-                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                  <span class="legend-item clickable" [class.disabled]="!showWeeklyIncome" (click)="toggleWeeklyIncome()">
+                    <span class="legend-color income"></span>수입
+                  </span>
+                  <span class="legend-item clickable" [class.disabled]="!showWeeklyExpense" (click)="toggleWeeklyExpense()">
+                    <span class="legend-color expense"></span>지출
+                  </span>
                 </div>
               </div>
             </mat-card-content>
@@ -313,17 +325,19 @@
                       <div *ngFor="let weekly of monthlyStats.weeklyExpenses" class="bar-group">
                         <div class="bars">
                           <div class="bar income-bar" 
+                               *ngIf="showMonthlyIncome"
                                [style.height.%]="getBarHeight(weekly.income, getYAxisValues(getMaxWeeklyAmount())[0])">
                           </div>
                           <div class="bar expense-bar" 
+                               *ngIf="showMonthlyExpense"
                                [style.height.%]="getBarHeight(weekly.expense, getYAxisValues(getMaxWeeklyAmount())[0])">
                           </div>
                         </div>
                         <div class="tooltip">
                           <div class="tooltip-title">{{ weekly.week }}주차</div>
                           <div class="tooltip-subtitle">{{ weekly.startDate | date: 'MM/dd' }} ~ {{ weekly.endDate | date: 'MM/dd' }}</div>
-                          <div class="tooltip-row income">수입: {{ formatAmount(weekly.income) }}</div>
-                          <div class="tooltip-row expense">지출: {{ formatAmount(weekly.expense) }}</div>
+                          <div class="tooltip-row income" *ngIf="showMonthlyIncome">수입: {{ formatAmount(weekly.income) }}</div>
+                          <div class="tooltip-row expense" *ngIf="showMonthlyExpense">지출: {{ formatAmount(weekly.expense) }}</div>
                           <div class="tooltip-row balance" [class.positive]="weekly.balance >= 0" [class.negative]="weekly.balance < 0">
                             합계: {{ formatAmount(weekly.balance) }}
                           </div>
@@ -339,8 +353,12 @@
                   </div>
                 </div>
                 <div class="chart-legend">
-                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
-                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                  <span class="legend-item clickable" [class.disabled]="!showMonthlyIncome" (click)="toggleMonthlyIncome()">
+                    <span class="legend-color income"></span>수입
+                  </span>
+                  <span class="legend-item clickable" [class.disabled]="!showMonthlyExpense" (click)="toggleMonthlyExpense()">
+                    <span class="legend-color expense"></span>지출
+                  </span>
                 </div>
               </div>
               <!-- 꺾은선 그래프 -->
@@ -356,24 +374,26 @@
                   </div>
                   <div class="chart-area">
                     <svg viewBox="0 0 1000 200" preserveAspectRatio="none" class="line-svg">
-                      <polyline class="line income-line" [attr.points]="getWeeklyLinePoints('income')"></polyline>
-                      <polyline class="line expense-line" [attr.points]="getWeeklyLinePoints('expense')"></polyline>
+                      <polyline *ngIf="showMonthlyIncome" class="line income-line" [attr.points]="getWeeklyLinePoints('income')"></polyline>
+                      <polyline *ngIf="showMonthlyExpense" class="line expense-line" [attr.points]="getWeeklyLinePoints('expense')"></polyline>
                     </svg>
                     <div class="point-container">
                       <div *ngFor="let weekly of monthlyStats.weeklyExpenses; let i = index" 
                            class="point-group"
                            [style.left.%]="getPointX(i, monthlyStats.weeklyExpenses.length)">
                         <div class="point income-point" 
+                             *ngIf="showMonthlyIncome"
                              [style.bottom.%]="getUnifiedPointY(weekly.income, getYAxisValues(getMaxWeeklyAmount())[0])">
                         </div>
                         <div class="point expense-point" 
+                             *ngIf="showMonthlyExpense"
                              [style.bottom.%]="getUnifiedPointY(weekly.expense, getYAxisValues(getMaxWeeklyAmount())[0])">
                         </div>
                         <div class="tooltip">
                           <div class="tooltip-title">{{ weekly.week }}주차</div>
                           <div class="tooltip-subtitle">{{ weekly.startDate | date: 'MM/dd' }} ~ {{ weekly.endDate | date: 'MM/dd' }}</div>
-                          <div class="tooltip-row income">수입: {{ formatAmount(weekly.income) }}</div>
-                          <div class="tooltip-row expense">지출: {{ formatAmount(weekly.expense) }}</div>
+                          <div class="tooltip-row income" *ngIf="showMonthlyIncome">수입: {{ formatAmount(weekly.income) }}</div>
+                          <div class="tooltip-row expense" *ngIf="showMonthlyExpense">지출: {{ formatAmount(weekly.expense) }}</div>
                           <div class="tooltip-row balance" [class.positive]="weekly.balance >= 0" [class.negative]="weekly.balance < 0">
                             합계: {{ formatAmount(weekly.balance) }}
                           </div>
@@ -389,8 +409,12 @@
                   </div>
                 </div>
                 <div class="chart-legend">
-                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
-                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                  <span class="legend-item clickable" [class.disabled]="!showMonthlyIncome" (click)="toggleMonthlyIncome()">
+                    <span class="legend-color income"></span>수입
+                  </span>
+                  <span class="legend-item clickable" [class.disabled]="!showMonthlyExpense" (click)="toggleMonthlyExpense()">
+                    <span class="legend-color expense"></span>지출
+                  </span>
                 </div>
               </div>
             </mat-card-content>
@@ -523,16 +547,18 @@
                       <div *ngFor="let monthly of yearlyStats.monthlyExpenses" class="bar-group">
                         <div class="bars">
                           <div class="bar income-bar" 
+                               *ngIf="showYearlyIncome"
                                [style.height.%]="getBarHeight(monthly.income, getYAxisValues(getMaxMonthlyAmount())[0])">
                           </div>
                           <div class="bar expense-bar" 
+                               *ngIf="showYearlyExpense"
                                [style.height.%]="getBarHeight(monthly.expense, getYAxisValues(getMaxMonthlyAmount())[0])">
                           </div>
                         </div>
                         <div class="tooltip">
                           <div class="tooltip-title">{{ selectedYear }}년 {{ monthly.month }}월</div>
-                          <div class="tooltip-row income">수입: {{ formatAmount(monthly.income) }}</div>
-                          <div class="tooltip-row expense">지출: {{ formatAmount(monthly.expense) }}</div>
+                          <div class="tooltip-row income" *ngIf="showYearlyIncome">수입: {{ formatAmount(monthly.income) }}</div>
+                          <div class="tooltip-row expense" *ngIf="showYearlyExpense">지출: {{ formatAmount(monthly.expense) }}</div>
                           <div class="tooltip-row balance" [class.positive]="monthly.balance >= 0" [class.negative]="monthly.balance < 0">
                             합계: {{ formatAmount(monthly.balance) }}
                           </div>
@@ -548,8 +574,12 @@
                   </div>
                 </div>
                 <div class="chart-legend">
-                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
-                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                  <span class="legend-item clickable" [class.disabled]="!showYearlyIncome" (click)="toggleYearlyIncome()">
+                    <span class="legend-color income"></span>수입
+                  </span>
+                  <span class="legend-item clickable" [class.disabled]="!showYearlyExpense" (click)="toggleYearlyExpense()">
+                    <span class="legend-color expense"></span>지출
+                  </span>
                 </div>
               </div>
               <!-- 꺾은선 그래프 -->
@@ -565,23 +595,25 @@
                   </div>
                   <div class="chart-area">
                     <svg viewBox="0 0 1000 200" preserveAspectRatio="none" class="line-svg">
-                      <polyline class="line income-line" [attr.points]="getMonthlyLinePoints('income')"></polyline>
-                      <polyline class="line expense-line" [attr.points]="getMonthlyLinePoints('expense')"></polyline>
+                      <polyline *ngIf="showYearlyIncome" class="line income-line" [attr.points]="getMonthlyLinePoints('income')"></polyline>
+                      <polyline *ngIf="showYearlyExpense" class="line expense-line" [attr.points]="getMonthlyLinePoints('expense')"></polyline>
                     </svg>
                     <div class="point-container">
                       <div *ngFor="let monthly of yearlyStats.monthlyExpenses; let i = index" 
                            class="point-group"
                            [style.left.%]="getPointX(i, yearlyStats.monthlyExpenses.length)">
                         <div class="point income-point" 
+                             *ngIf="showYearlyIncome"
                              [style.bottom.%]="getUnifiedPointY(monthly.income, getYAxisValues(getMaxMonthlyAmount())[0])">
                         </div>
                         <div class="point expense-point" 
+                             *ngIf="showYearlyExpense"
                              [style.bottom.%]="getUnifiedPointY(monthly.expense, getYAxisValues(getMaxMonthlyAmount())[0])">
                         </div>
                         <div class="tooltip">
                           <div class="tooltip-title">{{ selectedYear }}년 {{ monthly.month }}월</div>
-                          <div class="tooltip-row income">수입: {{ formatAmount(monthly.income) }}</div>
-                          <div class="tooltip-row expense">지출: {{ formatAmount(monthly.expense) }}</div>
+                          <div class="tooltip-row income" *ngIf="showYearlyIncome">수입: {{ formatAmount(monthly.income) }}</div>
+                          <div class="tooltip-row expense" *ngIf="showYearlyExpense">지출: {{ formatAmount(monthly.expense) }}</div>
                           <div class="tooltip-row balance" [class.positive]="monthly.balance >= 0" [class.negative]="monthly.balance < 0">
                             합계: {{ formatAmount(monthly.balance) }}
                           </div>
@@ -597,8 +629,12 @@
                   </div>
                 </div>
                 <div class="chart-legend">
-                  <span class="legend-item"><span class="legend-color income"></span>수입</span>
-                  <span class="legend-item"><span class="legend-color expense"></span>지출</span>
+                  <span class="legend-item clickable" [class.disabled]="!showYearlyIncome" (click)="toggleYearlyIncome()">
+                    <span class="legend-color income"></span>수입
+                  </span>
+                  <span class="legend-item clickable" [class.disabled]="!showYearlyExpense" (click)="toggleYearlyExpense()">
+                    <span class="legend-color expense"></span>지출
+                  </span>
                 </div>
               </div>
             </mat-card-content>

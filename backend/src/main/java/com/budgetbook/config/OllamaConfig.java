@@ -6,15 +6,15 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
-public class GeminiConfig {
+public class OllamaConfig {
 
-    @Value("${gemini.api-url}")
-    private String apiUrl;
+    @Value("${ollama.base-url}")
+    private String baseUrl;
 
     @Bean
-    public WebClient geminiWebClient() {
+    public WebClient ollamaWebClient() {
         return WebClient.builder()
-                .baseUrl(apiUrl)
+                .baseUrl(baseUrl)
                 .defaultHeader("Content-Type", "application/json")
                 .codecs(configurer -> configurer
                         .defaultCodecs()

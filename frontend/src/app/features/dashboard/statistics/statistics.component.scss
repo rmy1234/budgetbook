@@ -301,12 +301,34 @@
         gap: 6px;
         font-size: 13px;
         color: #666;
+        transition: opacity 0.2s ease;
+
+        &.clickable {
+          cursor: pointer;
+          user-select: none;
+          padding: 4px 8px;
+          border-radius: 4px;
+          margin: -4px -8px;
+
+          &:hover {
+            background: rgba(0, 0, 0, 0.04);
+          }
+        }
+
+        &.disabled {
+          opacity: 0.4;
+
+          .legend-color {
+            opacity: 0.5;
+          }
+        }
       }
 
       .legend-color {
         width: 12px;
         height: 12px;
         border-radius: 2px;
+        transition: opacity 0.2s ease;
 
         &.income {
           background: #4caf50;

@@ -44,7 +44,6 @@
       <mat-select formControlName="categoryId">
         @for (category of filteredCategories; track category.id) {
           <mat-option [value]="category.id">
-            <mat-icon>{{ category.icon || 'category' }}</mat-icon>
             {{ category.name }}
           </mat-option>
         }

@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -23,14 +24,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class AiService {
 
-    private final WebClient geminiWebClient;
+    private final WebClient ollamaWebClient;
     private final CategoryRepository categoryRepository;
     private final ObjectMapper objectMapper;
 
-    @Value("${gemini.api-key}")
-    private String apiKey;
-
-    @Value("${gemini.model}")
+    @Value("${ollama.model}")
     private String model;
 
     public AiParseResponse parseTransaction(Long userId, String userInput) {
@@ -39,9 +37,9 @@ public class AiService {
             List<Category> categories = categoryRepository.findByUserId(userId);
             
             String prompt = buildPrompt(userInput, categories);
-            String response = callGeminiApi(prompt);
+            String response = callOllamaApi(prompt);
             
-            return parseGeminiResponse(response, categories);
+            return parseOllamaResponse(response, categories);
         } catch (Exception e) {
             log.error("AI 파싱 실패: {}", e.getMessage(), e);
             return AiParseResponse.builder()
@@ -72,7 +70,7 @@ public class AiService {
             
             규칙:
             1. type: 수입이면 "INCOME", 지출이면 "EXPENSE"
-            2. amount: 숫자만 (원, 만원 등 단위 변환 필요 - 예: 5천원=5000, 3만원=30000)
+            2. amount: 반드시 원 단위 숫자로 변환
             3. categoryName: 아래 카테고리 중 가장 적합한 것 선택
             4. memo: 구체적인 내용 (없으면 빈 문자열)
             
@@ -89,60 +87,53 @@ public class AiService {
             출력: {"type":"INCOME","amount":3000000,"categoryName":"월급","memo":"이번달 월급"}
             
             사용자 입력: %s
-            """, expenseCategories, incomeCategories, userInput);
+            
+            JSON만 출력:""", expenseCategories, incomeCategories, userInput);
     }
 
-    private String callGeminiApi(String prompt) {
+    private String callOllamaApi(String prompt) {
         Map<String, Object> requestBody = Map.of(
-            "contents", List.of(
-                Map.of("parts", List.of(
-                    Map.of("text", prompt)
-                ))
-            ),
-            "generationConfig", Map.of(
+            "model", model,
+            "prompt", prompt,
+            "stream", false,
+            "options", Map.of(
                 "temperature", 0.1,
-                "maxOutputTokens", 256
+                "num_predict", 256
             )
         );
 
-        String url = "/" + model + ":generateContent?key=" + apiKey;
-
-        String response = geminiWebClient.post()
-                .uri(url)
+        String response = ollamaWebClient.post()
+                .uri("/api/generate")
                 .bodyValue(requestBody)
                 .retrieve()
                 .bodyToMono(String.class)
+                .timeout(Duration.ofSeconds(60))
                 .onErrorResume(e -> {
-                    log.error("Gemini API 호출 실패: {}", e.getMessage());
-                    return Mono.error(new RuntimeException("Gemini API 호출 실패: " + e.getMessage()));
+                    log.error("Ollama API 호출 실패: {}", e.getMessage());
+                    return Mono.error(new RuntimeException("Ollama API 호출 실패: " + e.getMessage()));
                 })
                 .block();
 
-        log.debug("Gemini 응답: {}", response);
+        log.debug("Ollama 응답: {}", response);
         return response;
     }
 
-    private AiParseResponse parseGeminiResponse(String response, List<Category> categories) {
+    private AiParseResponse parseOllamaResponse(String response, List<Category> categories) {
         try {
             JsonNode root = objectMapper.readTree(response);
-            JsonNode candidates = root.path("candidates");
+            String text = root.path("response").asText();
             
-            if (candidates.isEmpty()) {
+            if (text == null || text.isEmpty()) {
                 return AiParseResponse.builder()
                         .success(false)
                         .errorMessage("AI 응답이 비어있습니다")
                         .build();
             }
 
-            String text = candidates.get(0)
-                    .path("content")
-                    .path("parts")
-                    .get(0)
-                    .path("text")
-                    .asText();
-
             // JSON 부분 추출 (마크다운 코드 블록 제거)
             String jsonText = extractJson(text);
+            log.debug("추출된 JSON: {}", jsonText);
+            
             JsonNode parsed = objectMapper.readTree(jsonText);
 
             String type = parsed.path("type").asText();
@@ -164,6 +155,15 @@ public class AiService {
                         .filter(c -> c.getName().equals(categoryName))
                         .findFirst();
             }
+            
+            // 여전히 없으면 부분 매칭 시도
+            if (matchedCategory.isEmpty()) {
+                final String searchName = categoryName;
+                matchedCategory = categories.stream()
+                        .filter(c -> c.getName().contains(searchName) || searchName.contains(c.getName()))
+                        .filter(c -> c.getType() == transactionType)
+                        .findFirst();
+            }
 
             return AiParseResponse.builder()
                     .success(true)
@@ -176,7 +176,7 @@ public class AiService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Gemini 응답 파싱 실패: {}", e.getMessage(), e);
+            log.error("Ollama 응답 파싱 실패: {}", e.getMessage(), e);
             return AiParseResponse.builder()
                     .success(false)
                     .errorMessage("AI 응답 파싱 실패: " + e.getMessage())
@@ -185,8 +185,9 @@ public class AiService {
     }
 
     private String extractJson(String text) {
-        // 마크다운 코드 블록 제거
         text = text.trim();
+        
+        // 마크다운 코드 블록 제거
         if (text.startsWith("```json")) {
             text = text.substring(7);
         } else if (text.startsWith("```")) {
@@ -195,6 +196,15 @@ public class AiService {
         if (text.endsWith("```")) {
             text = text.substring(0, text.length() - 3);
         }
+        
+        // JSON 객체 부분만 추출
+        int startIndex = text.indexOf('{');
+        int endIndex = text.lastIndexOf('}');
+        
+        if (startIndex != -1 && endIndex != -1 && endIndex > startIndex) {
+            text = text.substring(startIndex, endIndex + 1);
+        }
+        
         return text.trim();
     }
 }

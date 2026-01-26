@@ -41,6 +41,14 @@ export class StatisticsComponent implements OnInit {
   monthlyChartType: 'bar' | 'line' = 'bar';
   yearlyChartType: 'bar' | 'line' = 'bar';
   
+  // 그래프 필터링 (수입/지출 표시 여부)
+  showWeeklyIncome = true;
+  showWeeklyExpense = true;
+  showMonthlyIncome = true;
+  showMonthlyExpense = true;
+  showYearlyIncome = true;
+  showYearlyExpense = true;
+  
   // 월별 통계
   monthlyStats: MonthlyStatistics | null = null;
   selectedYear = new Date().getFullYear();
@@ -266,25 +274,62 @@ export class StatisticsComponent implements OnInit {
     return Math.round((amount / total) * 100);
   }
 
-  // 그래프 관련 메서드
+  // 범례 토글 메서드
+  toggleWeeklyIncome(): void {
+    this.showWeeklyIncome = !this.showWeeklyIncome;
+  }
+
+  toggleWeeklyExpense(): void {
+    this.showWeeklyExpense = !this.showWeeklyExpense;
+  }
+
+  toggleMonthlyIncome(): void {
+    this.showMonthlyIncome = !this.showMonthlyIncome;
+  }
+
+  toggleMonthlyExpense(): void {
+    this.showMonthlyExpense = !this.showMonthlyExpense;
+  }
+
+  toggleYearlyIncome(): void {
+    this.showYearlyIncome = !this.showYearlyIncome;
+  }
+
+  toggleYearlyExpense(): void {
+    this.showYearlyExpense = !this.showYearlyExpense;
+  }
+
+  // 그래프 관련 메서드 - 필터링 상태에 따라 최대값 계산
   getMaxDailyAmount(): number {
     if (!this.weeklyStats?.dailyExpenses) return 0;
     return Math.max(
-      ...this.weeklyStats.dailyExpenses.map(d => Math.max(d.income, d.expense))
+      ...this.weeklyStats.dailyExpenses.map(d => {
+        const income = this.showWeeklyIncome ? d.income : 0;
+        const expense = this.showWeeklyExpense ? d.expense : 0;
+        return Math.max(income, expense);
+      })
     ) || 1;
   }
 
   getMaxWeeklyAmount(): number {
     if (!this.monthlyStats?.weeklyExpenses) return 0;
     return Math.max(
-      ...this.monthlyStats.weeklyExpenses.map(w => Math.max(w.income, w.expense))
+      ...this.monthlyStats.weeklyExpenses.map(w => {
+        const income = this.showMonthlyIncome ? w.income : 0;
+        const expense = this.showMonthlyExpense ? w.expense : 0;
+        return Math.max(income, expense);
+      })
     ) || 1;
   }
 
   getMaxMonthlyAmount(): number {
     if (!this.yearlyStats?.monthlyExpenses) return 0;
     return Math.max(
-      ...this.yearlyStats.monthlyExpenses.map(m => Math.max(m.income, m.expense))
+      ...this.yearlyStats.monthlyExpenses.map(m => {
+        const income = this.showYearlyIncome ? m.income : 0;
+        const expense = this.showYearlyExpense ? m.expense : 0;
+        return Math.max(income, expense);
+      })
     ) || 1;
   }
 

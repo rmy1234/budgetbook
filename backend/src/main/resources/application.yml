@@ -52,8 +52,7 @@ logging:
     org.springframework.web: DEBUG
     org.hibernate.SQL: DEBUG
 
-# Gemini AI Configuration
-gemini:
-  api-key: ${GEMINI_API_KEY:AIzaSyCNkKh_0doI7V0e31b6GlF_1OGDRVybGMY}
-  model: gemini-2.5-flash-lite
-  api-url: https://generativelanguage.googleapis.com/v1beta/models
+# Ollama AI Configuration (로컬 LLM)
+ollama:
+  base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+  model: ${OLLAMA_MODEL:gemma3:4b}
