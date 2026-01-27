@@ -42,7 +42,7 @@ export class LoginComponent implements OnInit {
 
   getErrorMessage(controlName: string): string {
     const control = this.loginForm.get(controlName);
-    if (control && control.invalid && (control.dirty || control.touched)) {
+    if (control && control.invalid && (control.dirty || control.touched) && control.value) {
       if (control.errors?.['required']) {
         if (controlName === 'email') return '아이디를 입력해주세요.';
         if (controlName === 'password') return '비밀번호를 입력해주세요.';

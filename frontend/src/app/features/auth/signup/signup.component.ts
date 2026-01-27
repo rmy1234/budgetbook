@@ -43,7 +43,7 @@ export class SignupComponent implements OnInit {
 
   getErrorMessage(controlName: string): string {
     const control = this.signupForm.get(controlName);
-    if (control && control.invalid && (control.dirty || control.touched)) {
+    if (control && control.invalid && (control.dirty || control.touched) && control.value) {
       if (control.errors?.['required']) {
         if (controlName === 'name') return '이름을 입력해주세요.';
         if (controlName === 'email') return '아이디를 입력해주세요.';
