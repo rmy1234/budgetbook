@@ -108,4 +108,8 @@ public class AuthService {
                 .expiresIn(3600L)
                 .build();
     }
+
+    public boolean checkEmailAvailability(String email) {
+        return !userRepository.existsByEmail(email);
+    }
 }

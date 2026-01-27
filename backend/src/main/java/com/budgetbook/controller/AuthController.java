@@ -59,6 +59,22 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success(tokenResponse));
     }
 
+    @GetMapping("/check-email")
+    public ResponseEntity<ApiResponse<EmailAvailabilityResponse>> checkEmail(@RequestParam String email) {
+        boolean available = authService.checkEmailAvailability(email);
+        EmailAvailabilityResponse response = new EmailAvailabilityResponse(available, 
+            available ? "사용 가능한 이메일입니다" : "이미 등록된 이메일입니다");
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @lombok.Getter
+    @lombok.Setter
+    @lombok.AllArgsConstructor
+    private static class EmailAvailabilityResponse {
+        private boolean available;
+        private String message;
+    }
+
     @lombok.Getter
     @lombok.Setter
     private static class RefreshTokenRequest {

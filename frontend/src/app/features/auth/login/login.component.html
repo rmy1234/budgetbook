@@ -16,12 +16,21 @@
       </div>
       
       <div class="form-field">
-        <input 
-          type="password" 
-          formControlName="password" 
-          placeholder="비밀번호를 입력해주세요"
-          class="form-input"
-          [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.dirty && loginForm.get('password')?.value">
+        <div class="password-input-wrapper">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            formControlName="password" 
+            placeholder="비밀번호를 입력해주세요"
+            class="form-input password-input"
+            [class.error]="loginForm.get('password')?.invalid && loginForm.get('password')?.dirty && loginForm.get('password')?.value">
+          <button 
+            type="button"
+            class="btn-toggle-password"
+            (click)="togglePasswordVisibility()"
+            tabindex="-1">
+            <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </div>
         <span class="error-message" *ngIf="getErrorMessage('password')">
           {{ getErrorMessage('password') }}
         </span>

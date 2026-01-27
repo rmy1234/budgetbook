@@ -60,6 +60,15 @@ export class AuthService {
     return this.http.post(`${this.apiUrl}/signup`, request);
   }
 
+  checkEmail(email: string): Observable<{ available: boolean; message: string }> {
+    return this.http.get<ApiResponse<{ available: boolean; message: string }>>(
+      `${this.apiUrl}/check-email`,
+      { params: { email } }
+    ).pipe(
+      map(response => response.data)
+    );
+  }
+
   login(request: LoginRequest): Observable<TokenResponse> {
     return this.http.post<ApiResponse<TokenResponse>>(`${this.apiUrl}/login`, request).pipe(
       map(response => response.data),

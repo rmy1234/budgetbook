@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -10,7 +11,8 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    RouterLink
+    RouterLink,
+    MatIconModule
   ],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.scss']
@@ -18,6 +20,12 @@ import { AuthService } from '../../../core/services/auth.service';
 export class SignupComponent implements OnInit {
   signupForm: FormGroup;
   loading = false;
+  checkingEmail = false;
+  emailChecked = false;
+  emailAvailable: boolean | null = null;
+  emailCheckMessage = '';
+  showPassword = false;
+  showConfirmPassword = false;
 
   constructor(
     private fb: FormBuilder,
@@ -79,6 +87,56 @@ export class SignupComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // 이메일 입력 시 중복확인 상태 초기화
+    this.signupForm.get('email')?.valueChanges.subscribe(() => {
+      this.emailChecked = false;
+      this.emailAvailable = null;
+      this.emailCheckMessage = '';
+    });
+  }
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleConfirmPasswordVisibility(): void {
+    this.showConfirmPassword = !this.showConfirmPassword;
+  }
+
+  checkEmailDuplicate(): void {
+    const email = this.signupForm.get('email')?.value;
+    
+    if (!email) {
+      return;
+    }
+
+    // 이메일 형식 검증
+    if (this.signupForm.get('email')?.hasError('email')) {
+      return;
+    }
+
+    this.checkingEmail = true;
+    this.emailChecked = false;
+    this.emailAvailable = null;
+    this.emailCheckMessage = '';
+
+    this.authService.checkEmail(email).subscribe({
+      next: (response) => {
+        this.checkingEmail = false;
+        this.emailChecked = true;
+        this.emailAvailable = response.available;
+        this.emailCheckMessage = response.available 
+          ? '중복되지 않은 이메일 입니다!' 
+          : '중복된 이메일 입니다!';
+      },
+      error: (err) => {
+        this.checkingEmail = false;
+        this.emailChecked = true;
+        this.emailAvailable = false;
+        this.emailCheckMessage = '중복된 이메일 입니다!';
+        console.error('Email check error', err);
+      }
+    });
   }
 
   onSubmit(): void {

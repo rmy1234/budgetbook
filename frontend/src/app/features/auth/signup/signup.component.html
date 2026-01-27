@@ -16,36 +16,69 @@
       </div>
       
       <div class="form-field">
-        <input 
-          type="text" 
-          formControlName="email" 
-          placeholder="아이디를 입력해주세요"
-          class="form-input"
-          [class.error]="signupForm.get('email')?.invalid && signupForm.get('email')?.dirty && signupForm.get('email')?.value">
+        <div class="email-input-wrapper">
+          <input 
+            type="text" 
+            formControlName="email" 
+            placeholder="아이디를 입력해주세요"
+            class="form-input email-input"
+            [class.error]="signupForm.get('email')?.invalid && signupForm.get('email')?.dirty && signupForm.get('email')?.value">
+          <button 
+            type="button"
+            class="btn-check-email"
+            (click)="checkEmailDuplicate()"
+            [disabled]="checkingEmail || !signupForm.get('email')?.value || signupForm.get('email')?.invalid">
+            {{ checkingEmail ? '확인 중...' : '중복확인' }}
+          </button>
+        </div>
         <span class="error-message" *ngIf="getErrorMessage('email')">
           {{ getErrorMessage('email') }}
+        </span>
+        <span class="email-check-message" 
+              *ngIf="emailChecked"
+              [class.success]="emailAvailable"
+              [class.error]="!emailAvailable">
+          {{ emailCheckMessage }}
         </span>
       </div>
       
       <div class="form-field">
-        <input 
-          type="password" 
-          formControlName="password" 
-          placeholder="비밀번호를 입력해주세요"
-          class="form-input"
-          [class.error]="signupForm.get('password')?.invalid && signupForm.get('password')?.dirty && signupForm.get('password')?.value">
+        <div class="password-input-wrapper">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            formControlName="password" 
+            placeholder="비밀번호를 입력해주세요"
+            class="form-input password-input"
+            [class.error]="signupForm.get('password')?.invalid && signupForm.get('password')?.dirty && signupForm.get('password')?.value">
+          <button 
+            type="button"
+            class="btn-toggle-password"
+            (click)="togglePasswordVisibility()"
+            tabindex="-1">
+            <mat-icon>{{ showPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </div>
         <span class="error-message" *ngIf="getErrorMessage('password')">
           {{ getErrorMessage('password') }}
         </span>
       </div>
       
       <div class="form-field">
-        <input 
-          type="password" 
-          formControlName="confirmPassword" 
-          placeholder="비밀번호를 다시 입력해주세요"
-          class="form-input"
-          [class.error]="signupForm.get('confirmPassword')?.invalid && signupForm.get('confirmPassword')?.dirty && signupForm.get('confirmPassword')?.value">
+        <div class="password-input-wrapper">
+          <input 
+            [type]="showConfirmPassword ? 'text' : 'password'" 
+            formControlName="confirmPassword" 
+            placeholder="비밀번호를 다시 입력해주세요"
+            class="form-input password-input"
+            [class.error]="signupForm.get('confirmPassword')?.invalid && signupForm.get('confirmPassword')?.dirty && signupForm.get('confirmPassword')?.value">
+          <button 
+            type="button"
+            class="btn-toggle-password"
+            (click)="toggleConfirmPasswordVisibility()"
+            tabindex="-1">
+            <mat-icon>{{ showConfirmPassword ? 'visibility_off' : 'visibility' }}</mat-icon>
+          </button>
+        </div>
         <span class="error-message" *ngIf="getErrorMessage('confirmPassword')">
           {{ getErrorMessage('confirmPassword') }}
         </span>
