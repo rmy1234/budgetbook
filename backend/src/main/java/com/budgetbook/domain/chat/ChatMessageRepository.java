@@ -1,0 +1,19 @@
+package com.budgetbook.domain.chat;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
+
+public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
+    
+    List<ChatMessage> findByUserIdOrderByCreatedAtAsc(Long userId);
+    
+    @Modifying
+    @Query("DELETE FROM ChatMessage c WHERE c.user.id = :userId")
+    void deleteAllByUserId(@Param("userId") Long userId);
+    
+    long countByUserId(Long userId);
+}

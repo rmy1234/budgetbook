@@ -4,39 +4,148 @@
   class="ai-fab"
   [class.active]="isOpen"
   (click)="togglePanel()"
-  matTooltip="AI로 거래 추가"
+  matTooltip="AI 어시스턴트"
   matTooltipPosition="left">
   <mat-icon>{{ isOpen ? 'close' : 'smart_toy' }}</mat-icon>
 </button>
 
-<!-- 입력 패널 -->
+<!-- 채팅 패널 -->
 <div class="ai-panel" [class.open]="isOpen">
   <!-- 헤더 -->
   <div class="ai-panel-header">
-    <div class="ai-icon">
-      <mat-icon>smart_toy</mat-icon>
+    <div class="header-left">
+      <div class="ai-icon">
+        <mat-icon>smart_toy</mat-icon>
+      </div>
+      <h3>AI 어시스턴트</h3>
     </div>
-    <h3>무엇을 도와드릴까요?</h3>
+    <button class="clear-btn" (click)="clearChat()" matTooltip="대화 초기화">
+      <mat-icon>refresh</mat-icon>
+    </button>
   </div>
   
-  <!-- 예시 힌트 -->
-  <div class="ai-hints">
-    <div class="hint-item">
-      <mat-icon>restaurant</mat-icon>
-      <span>"점심에 김밥 5천원 먹었어"</span>
-    </div>
-    <div class="hint-item">
-      <mat-icon>account_balance_wallet</mat-icon>
-      <span>"이번달 월급 300만원 들어왔어"</span>
-    </div>
-  </div>
+  <!-- 메시지 영역 -->
+  <div class="messages-container" #messagesContainer>
+    @for (message of messages; track message.timestamp) {
+      <div class="message" [class.user]="message.role === 'user'" [class.assistant]="message.role === 'assistant'">
+        @if (message.role === 'assistant') {
+          <div class="avatar">
+            <mat-icon>smart_toy</mat-icon>
+          </div>
+        }
+        <div class="message-content">
+          <div class="bubble" [class.help-message]="message.actionType === 'HELP'">{{ message.content }}</div>
+          
+          <!-- 거래 카드 -->
+          @if (message.transaction) {
+            <div class="transaction-card" [class.income]="message.transaction.type === 'INCOME'" [class.expense]="message.transaction.type === 'EXPENSE'">
+              <div class="transaction-header">
+                <mat-icon>{{ message.transaction.type === 'INCOME' ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+                <span class="transaction-type">{{ message.transaction.type === 'INCOME' ? '수입' : '지출' }}</span>
+              </div>
+              <div class="transaction-info">
+                <div class="info-row">
+                  <span class="label">금액</span>
+                  <span class="value amount">{{ formatAmount(message.transaction.amount) }}원</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">카테고리</span>
+                  <span class="value">{{ message.transaction.categoryName }}</span>
+                </div>
+                @if (message.transaction.memo) {
+                  <div class="info-row">
+                    <span class="label">메모</span>
+                    <span class="value">{{ message.transaction.memo }}</span>
+                  </div>
+                }
+              </div>
+              <button class="action-btn transaction-btn" (click)="addTransaction(message.transaction)">
+                <mat-icon>add</mat-icon>
+                거래 추가하기
+              </button>
+            </div>
+          }
 
-  @if (errorMessage) {
-    <div class="ai-error">
-      <mat-icon>error_outline</mat-icon>
-      <span>{{ errorMessage }}</span>
-    </div>
-  }
+          <!-- 카테고리 카드 -->
+          @if (message.category) {
+            <div class="category-card" [class.income]="message.category.type === 'INCOME'" [class.expense]="message.category.type === 'EXPENSE'">
+              <div class="card-header">
+                <mat-icon>{{ message.category.icon }}</mat-icon>
+                <span class="card-title">카테고리 생성</span>
+              </div>
+              <div class="card-info">
+                <div class="info-row">
+                  <span class="label">이름</span>
+                  <span class="value">{{ message.category.name }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">유형</span>
+                  <span class="value type-badge" [class.income]="message.category.type === 'INCOME'" [class.expense]="message.category.type === 'EXPENSE'">
+                    {{ message.category.type === 'INCOME' ? '수입' : '지출' }}
+                  </span>
+                </div>
+              </div>
+              <button class="action-btn category-btn" (click)="createCategory(message.category)">
+                <mat-icon>add</mat-icon>
+                카테고리 생성하기
+              </button>
+            </div>
+          }
+
+          <!-- 계좌 카드 -->
+          @if (message.account) {
+            <div class="account-card">
+              <div class="card-header">
+                <mat-icon>account_balance</mat-icon>
+                <span class="card-title">계좌 등록</span>
+              </div>
+              <div class="card-info">
+                <div class="info-row">
+                  <span class="label">은행</span>
+                  <span class="value">{{ message.account.bankName }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">별칭</span>
+                  <span class="value">{{ message.account.alias }}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">초기 잔액</span>
+                  <span class="value">{{ formatAmount(message.account.balance) }}원</span>
+                </div>
+              </div>
+              <button class="action-btn account-btn" (click)="createAccount(message.account)">
+                <mat-icon>add</mat-icon>
+                계좌 등록하기
+              </button>
+            </div>
+          }
+        </div>
+        @if (message.role === 'user') {
+          <div class="avatar user-avatar">
+            <mat-icon>person</mat-icon>
+          </div>
+        }
+      </div>
+    }
+    
+    <!-- 로딩 인디케이터 -->
+    @if (isLoading) {
+      <div class="message assistant">
+        <div class="avatar">
+          <mat-icon>smart_toy</mat-icon>
+        </div>
+        <div class="message-content">
+          <div class="bubble typing">
+            <div class="typing-indicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
 
   <!-- 입력창 -->
   <div class="ai-input-container">
@@ -46,16 +155,12 @@
       [(ngModel)]="inputText"
       (keydown)="onKeyDown($event)"
       [disabled]="isLoading"
-      placeholder="거래 내용을 입력하세요...">
+      placeholder="메시지를 입력하세요...">
     <button
       class="ai-send-btn"
       [disabled]="!inputText.trim() || isLoading"
-      (click)="onSubmit()">
-      @if (isLoading) {
-        <mat-spinner diameter="18"></mat-spinner>
-      } @else {
-        <mat-icon>arrow_upward</mat-icon>
-      }
+      (click)="sendMessage()">
+      <mat-icon>arrow_upward</mat-icon>
     </button>
   </div>
 </div>

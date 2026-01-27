@@ -1,0 +1,49 @@
+<h2 mat-dialog-title>
+  <mat-icon class="title-icon">smart_toy</mat-icon>
+  AI 계좌 등록 확인
+</h2>
+
+<mat-dialog-content>
+  <div class="ai-result-summary">
+    <div class="result-icon">
+      <mat-icon>account_balance</mat-icon>
+    </div>
+    <div class="result-info">
+      <div class="result-bank">{{ data.account.bankName }}</div>
+      <div class="result-alias">{{ data.account.alias }}</div>
+    </div>
+    <div class="result-balance">
+      {{ data.account.balance | number }}원
+    </div>
+  </div>
+
+  <form [formGroup]="accountForm" class="account-form">
+    <mat-form-field appearance="outline">
+      <mat-label>은행</mat-label>
+      <mat-select formControlName="bankName">
+        @for (bank of bankOptions; track bank) {
+          <mat-option [value]="bank">{{ bank }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>계좌 별칭</mat-label>
+      <input matInput formControlName="alias" placeholder="예: 월급통장, 생활비">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>초기 잔액</mat-label>
+      <input matInput formControlName="balance" (input)="onBalanceInput($event)" placeholder="0">
+      <span matTextSuffix>원</span>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="loading">취소</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!accountForm.valid || loading">
+    <mat-icon>{{ loading ? 'hourglass_empty' : 'check' }}</mat-icon>
+    {{ loading ? '등록 중...' : '계좌 등록' }}
+  </button>
+</mat-dialog-actions>

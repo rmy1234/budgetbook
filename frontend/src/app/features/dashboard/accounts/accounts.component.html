@@ -21,15 +21,12 @@
             <input matInput formControlName="alias">
           </mat-form-field>
 
-          <mat-form-field appearance="outline" *ngIf="!isEditing" class="balance-field">
-            <mat-label>초기 금액</mat-label>
-            <input matInput type="number" formControlName="balance" min="0" required>
-            <span matPrefix class="currency-prefix">₩&nbsp;</span>
+          <mat-form-field appearance="outline" class="balance-field">
+            <mat-label>{{ isEditing ? '잔액' : '초기 금액' }}</mat-label>
+            <input matInput type="text" formControlName="balance" (input)="onBalanceInput($event)" placeholder="0" required>
+            <span matTextSuffix>원</span>
             <mat-error *ngIf="accountForm.get('balance')?.hasError('required')">
-              초기 금액을 입력해주세요
-            </mat-error>
-            <mat-error *ngIf="accountForm.get('balance')?.hasError('min')">
-              금액은 0 이상이어야 합니다
+              {{ isEditing ? '잔액' : '초기 금액' }}을 입력해주세요
             </mat-error>
           </mat-form-field>
         </div>

@@ -51,8 +51,12 @@ export class AccountService {
       );
   }
 
-  updateAccount(id: number, alias: string): Observable<Account> {
-    return this.http.put<{ data: Account }>(`${this.apiUrl}/${id}`, { alias })
+  updateAccount(id: number, alias: string, balance?: number): Observable<Account> {
+    const request: any = { alias };
+    if (balance !== undefined) {
+      request.balance = balance;
+    }
+    return this.http.put<{ data: Account }>(`${this.apiUrl}/${id}`, request)
       .pipe(
         map(response => response.data),
         tap(() => this.refreshAccounts())

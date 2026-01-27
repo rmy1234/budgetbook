@@ -52,7 +52,7 @@ public class AccountController {
             @PathVariable Long id,
             @RequestBody AccountUpdateRequest request) {
         Long userId = Long.parseLong(authentication.getName());
-        AccountResponse response = accountService.updateAccount(userId, id, request.getAlias());
+        AccountResponse response = accountService.updateAccount(userId, id, request.getAlias(), request.getBalance());
         return ResponseEntity.ok(ApiResponse.success(response, "계좌 정보가 수정되었습니다"));
     }
 
@@ -69,5 +69,6 @@ public class AccountController {
     @lombok.Setter
     private static class AccountUpdateRequest {
         private String alias;
+        private java.math.BigDecimal balance;
     }
 }

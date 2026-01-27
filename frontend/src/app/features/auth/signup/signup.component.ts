@@ -126,7 +126,7 @@ export class SignupComponent implements OnInit {
         this.emailChecked = true;
         this.emailAvailable = response.available;
         this.emailCheckMessage = response.available 
-          ? '중복되지 않은 이메일 입니다!' 
+          ? '사용 가능한 이메일 입니다!' 
           : '중복된 이메일 입니다!';
       },
       error: (err) => {
@@ -151,6 +151,7 @@ export class SignupComponent implements OnInit {
         age: formValue.age ? parseInt(formValue.age, 10) : 0
       }).subscribe({
         next: () => {
+          alert('회원가입이 완료되었습니다!');
           this.router.navigate(['/auth/login']);
         },
         error: (err) => {

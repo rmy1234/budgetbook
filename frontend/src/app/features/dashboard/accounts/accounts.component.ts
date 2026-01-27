@@ -49,7 +49,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     this.accountForm = this.fb.group({
       bankName: ['', [Validators.required]],
       alias: [''],
-      balance: [0, [Validators.required, Validators.min(0)]]
+      balance: ['0', [Validators.required]]
     });
   }
 
@@ -93,18 +93,42 @@ export class AccountsComponent implements OnInit, OnDestroy {
     });
   }
 
+  onBalanceInput(event: any): void {
+    const input = event.target.value;
+    const numericValue = input.replace(/,/g, '');
+    if (numericValue === '' || !isNaN(Number(numericValue))) {
+      const formatted = numericValue === '' ? '0' : Number(numericValue).toLocaleString('ko-KR');
+      this.accountForm.get('balance')?.setValue(formatted, { emitEvent: false });
+    }
+  }
+
+  getBalanceValue(): number {
+    const balanceValue = this.accountForm.get('balance')?.value;
+    if (!balanceValue) return 0;
+    const numericValue = String(balanceValue).replace(/,/g, '');
+    return Number(numericValue) || 0;
+  }
+
+  formatNumber(value: number): string {
+    return value.toLocaleString('ko-KR');
+  }
+
   onSubmit(): void {
     if (this.accountForm.valid) {
       const formValue = this.accountForm.value;
       const request = {
         bankName: formValue.bankName,
         alias: formValue.alias || null,
-        balance: formValue.balance || 0
+        balance: this.getBalanceValue()
       };
 
       if (this.isEditing && this.editingAccountId) {
-        // 수정은 별칭만 가능
-        this.accountService.updateAccount(this.editingAccountId, request.alias || '').subscribe({
+        // 수정은 별칭과 잔액 가능
+        this.accountService.updateAccount(
+          this.editingAccountId, 
+          request.alias || '', 
+          request.balance
+        ).subscribe({
           next: () => {
             this.snackBar.open('계좌가 수정되었습니다', '닫기', { duration: 3000 });
             this.resetForm();
@@ -133,7 +157,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     this.accountForm.patchValue({
       bankName: account.bankName,
       alias: account.alias || '',
-      balance: account.balance
+      balance: this.formatNumber(account.balance)
     });
   }
 
@@ -154,7 +178,7 @@ export class AccountsComponent implements OnInit, OnDestroy {
     this.accountForm.reset({
       bankName: '',
       alias: '',
-      balance: 0
+      balance: '0'
     });
     this.isEditing = false;
     this.editingAccountId = null;

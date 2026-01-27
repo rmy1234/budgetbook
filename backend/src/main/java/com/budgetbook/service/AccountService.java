@@ -63,7 +63,7 @@ public class AccountService {
     @Transactional
     @CacheEvict(value = "accounts", key = "#userId")
     @SuppressWarnings("null")
-    public AccountResponse updateAccount(Long userId, Long accountId, String alias) {
+    public AccountResponse updateAccount(Long userId, Long accountId, String alias, BigDecimal balance) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new BusinessException("ACCOUNT_001", "계좌를 찾을 수 없습니다"));
 
@@ -71,7 +71,12 @@ public class AccountService {
             throw new BusinessException("ACCOUNT_002", "계좌 소유권이 없습니다");
         }
 
-        account.updateAlias(alias);
+        if (alias != null) {
+            account.updateAlias(alias);
+        }
+        if (balance != null) {
+            account.updateBalance(balance);
+        }
         Account savedAccount = accountRepository.save(account);
         return toResponse(savedAccount);
     }

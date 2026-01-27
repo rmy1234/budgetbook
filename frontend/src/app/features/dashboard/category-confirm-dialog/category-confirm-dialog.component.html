@@ -1,0 +1,53 @@
+<h2 mat-dialog-title>
+  <mat-icon class="title-icon">smart_toy</mat-icon>
+  AI 카테고리 생성 확인
+</h2>
+
+<mat-dialog-content>
+  <div class="ai-result-summary" [class.income]="data.category.type === 'INCOME'" [class.expense]="data.category.type === 'EXPENSE'">
+    <div class="result-icon">
+      <mat-icon>{{ data.category.icon }}</mat-icon>
+    </div>
+    <div class="result-info">
+      <div class="result-name">{{ data.category.name }}</div>
+      <div class="result-type">
+        {{ data.category.type === 'INCOME' ? '수입 카테고리' : '지출 카테고리' }}
+      </div>
+    </div>
+  </div>
+
+  <form [formGroup]="categoryForm" class="category-form">
+    <mat-form-field appearance="outline">
+      <mat-label>카테고리 이름</mat-label>
+      <input matInput formControlName="name" placeholder="카테고리 이름">
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>유형</mat-label>
+      <mat-select formControlName="type">
+        <mat-option value="EXPENSE">지출</mat-option>
+        <mat-option value="INCOME">수입</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>아이콘</mat-label>
+      <mat-select formControlName="icon">
+        @for (icon of iconOptions; track icon.value) {
+          <mat-option [value]="icon.value">
+            <mat-icon>{{ icon.value }}</mat-icon>
+            {{ icon.label }}
+          </mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </form>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button (click)="onCancel()" [disabled]="loading">취소</button>
+  <button mat-raised-button color="primary" (click)="onSave()" [disabled]="!categoryForm.valid || loading">
+    <mat-icon>{{ loading ? 'hourglass_empty' : 'check' }}</mat-icon>
+    {{ loading ? '생성 중...' : '카테고리 생성' }}
+  </button>
+</mat-dialog-actions>
