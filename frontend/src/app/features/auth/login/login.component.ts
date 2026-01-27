@@ -2,9 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
-import { SecurityService } from '../../../core/services/security.service';
 
 @Component({
   selector: 'app-login',
@@ -12,7 +10,6 @@ import { SecurityService } from '../../../core/services/security.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule,
     RouterLink
   ],
   templateUrl: './login.component.html',
@@ -21,15 +18,11 @@ import { SecurityService } from '../../../core/services/security.service';
 export class LoginComponent implements OnInit {
   loginForm: FormGroup;
   loading = false;
-  secureConnection = false;
-  isHttps = false;
-  isLocalhost = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router,
-    private securityService: SecurityService
+    private router: Router
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -38,27 +31,20 @@ export class LoginComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // 저장된 보안접속 설정 불러오기
-    this.secureConnection = this.securityService.isSecureConnectionEnabled();
-    this.isHttps = this.securityService.isHttps();
-    this.isLocalhost = window.location.hostname === 'localhost';
-    this.checkSecureConnectionStatus();
   }
 
-  checkSecureConnectionStatus(): void {
-    if (this.secureConnection && !this.isHttps) {
-      console.warn('보안접속이 활성화되어 있지만 HTTPS를 사용하지 않고 있습니다.');
+  getErrorMessage(controlName: string): string {
+    const control = this.loginForm.get(controlName);
+    if (control && control.invalid && (control.dirty || control.touched)) {
+      if (control.errors?.['required']) {
+        if (controlName === 'email') return '아이디를 입력해주세요.';
+        if (controlName === 'password') return '비밀번호를 입력해주세요.';
+      }
+      if (control.errors?.['email']) {
+        return '올바른 이메일 형식을 입력해주세요.';
+      }
     }
-  }
-
-  onSecureConnectionChange(enabled: boolean): void {
-    this.secureConnection = enabled;
-    this.securityService.setSecureConnection(enabled);
-    
-    if (enabled && !this.isHttps) {
-      // HTTPS로 리다이렉트 (서버가 HTTPS를 지원하는 경우)
-      this.securityService.enforceHttps();
-    }
+    return '';
   }
 
   onSubmit(): void {

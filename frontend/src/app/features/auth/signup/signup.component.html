@@ -3,53 +3,68 @@
     <h1 class="signup-title">회원가입</h1>
     
     <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
-      <input 
-        type="text" 
-        formControlName="name" 
-        placeholder="이름을 입력해주세요"
-        class="form-input"
-        [class.error]="signupForm.get('name')?.invalid && signupForm.get('name')?.touched">
+      <div class="form-field">
+        <input 
+          type="text" 
+          formControlName="name" 
+          placeholder="이름을 입력해주세요"
+          class="form-input"
+          [class.error]="signupForm.get('name')?.invalid && signupForm.get('name')?.dirty && signupForm.get('name')?.value">
+        <span class="error-message" *ngIf="getErrorMessage('name')">
+          {{ getErrorMessage('name') }}
+        </span>
+      </div>
       
-      <input 
-        type="text" 
-        formControlName="email" 
-        placeholder="아이디를 입력해주세요"
-        class="form-input"
-        [class.error]="signupForm.get('email')?.invalid && signupForm.get('email')?.touched">
+      <div class="form-field">
+        <input 
+          type="text" 
+          formControlName="email" 
+          placeholder="아이디를 입력해주세요"
+          class="form-input"
+          [class.error]="signupForm.get('email')?.invalid && signupForm.get('email')?.dirty && signupForm.get('email')?.value">
+        <span class="error-message" *ngIf="getErrorMessage('email')">
+          {{ getErrorMessage('email') }}
+        </span>
+      </div>
       
-      <input 
-        type="password" 
-        formControlName="password" 
-        placeholder="비밀번호를 입력해주세요"
-        class="form-input"
-        [class.error]="signupForm.get('password')?.invalid && signupForm.get('password')?.touched">
+      <div class="form-field">
+        <input 
+          type="password" 
+          formControlName="password" 
+          placeholder="비밀번호를 입력해주세요"
+          class="form-input"
+          [class.error]="signupForm.get('password')?.invalid && signupForm.get('password')?.dirty && signupForm.get('password')?.value">
+        <span class="error-message" *ngIf="getErrorMessage('password')">
+          {{ getErrorMessage('password') }}
+        </span>
+      </div>
       
-      <input 
-        type="number" 
-        formControlName="age" 
-        placeholder="나이를 입력해주세요"
-        class="form-input"
-        [class.error]="signupForm.get('age')?.invalid && signupForm.get('age')?.touched">
+      <div class="form-field">
+        <input 
+          type="password" 
+          formControlName="confirmPassword" 
+          placeholder="비밀번호를 다시 입력해주세요"
+          class="form-input"
+          [class.error]="signupForm.get('confirmPassword')?.invalid && signupForm.get('confirmPassword')?.dirty && signupForm.get('confirmPassword')?.value">
+        <span class="error-message" *ngIf="getErrorMessage('confirmPassword')">
+          {{ getErrorMessage('confirmPassword') }}
+        </span>
+      </div>
+      
+      <div class="form-field">
+        <input 
+          type="number" 
+          formControlName="age" 
+          placeholder="나이를 입력해주세요"
+          min="1"
+          class="form-input"
+          [class.error]="signupForm.get('age')?.invalid && signupForm.get('age')?.dirty && signupForm.get('age')?.value">
+        <span class="error-message" *ngIf="getErrorMessage('age')">
+          {{ getErrorMessage('age') }}
+        </span>
+      </div>
       
       <div class="form-options">
-        <label class="checkbox-label">
-          <input 
-            type="checkbox" 
-            [(ngModel)]="secureConnection"
-            [ngModelOptions]="{standalone: true}"
-            (ngModelChange)="onSecureConnectionChange($event)"
-            class="checkbox-input">
-          <span class="checkbox-text">
-            보안접속
-            <span class="secure-indicator" *ngIf="secureConnection && isHttps" title="HTTPS 보안 연결 활성화">
-              🔒
-            </span>
-            <span class="secure-warning" *ngIf="secureConnection && !isHttps && !isLocalhost" title="HTTPS를 사용하는 것이 권장됩니다">
-              ⚠️
-            </span>
-          </span>
-        </label>
-        
         <div class="links">
           <a href="#" class="link">아이디 찾기</a>
           <span class="separator">|</span>

@@ -1,10 +1,8 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, AbstractControl, ValidationErrors } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
-import { SecurityService } from '../../../core/services/security.service';
 
 @Component({
   selector: 'app-signup',
@@ -12,7 +10,6 @@ import { SecurityService } from '../../../core/services/security.service';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    FormsModule,
     RouterLink
   ],
   templateUrl: './signup.component.html',
@@ -21,46 +18,67 @@ import { SecurityService } from '../../../core/services/security.service';
 export class SignupComponent implements OnInit {
   signupForm: FormGroup;
   loading = false;
-  secureConnection = false;
-  isHttps = false;
-  isLocalhost = false;
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router,
-    private securityService: SecurityService
+    private router: Router
   ) {
     this.signupForm = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2)]],
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(8)]],
-      age: ['', [Validators.required]]
-    });
+      confirmPassword: ['', [Validators.required]],
+      age: ['', [Validators.required, Validators.min(1)]]
+    }, { validators: this.passwordMatchValidator });
+  }
+
+  getErrorMessage(controlName: string): string {
+    const control = this.signupForm.get(controlName);
+    if (control && control.invalid && (control.dirty || control.touched)) {
+      if (control.errors?.['required']) {
+        if (controlName === 'name') return '이름을 입력해주세요.';
+        if (controlName === 'email') return '아이디를 입력해주세요.';
+        if (controlName === 'password') return '비밀번호를 입력해주세요.';
+        if (controlName === 'confirmPassword') return '비밀번호를 다시 입력해주세요.';
+        if (controlName === 'age') return '나이를 입력해주세요.';
+      }
+      if (control.errors?.['minlength']) {
+        if (controlName === 'name') return '이름은 최소 2자 이상 입력해주세요.';
+        if (controlName === 'password') return '비밀번호는 최소 8자 이상 입력해주세요.';
+      }
+      if (control.errors?.['email']) {
+        return '올바른 이메일 형식을 입력해주세요.';
+      }
+      if (control.errors?.['min']) {
+        return '나이는 1 이상 입력해주세요.';
+      }
+      if (control.errors?.['passwordMismatch']) {
+        return '비밀번호가 일치하지 않습니다.';
+      }
+    }
+    return '';
+  }
+
+  passwordMatchValidator(formGroup: AbstractControl): ValidationErrors | null {
+    const password = formGroup.get('password');
+    const confirmPassword = formGroup.get('confirmPassword');
+    
+    if (password && confirmPassword && password.value && confirmPassword.value && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    } else {
+      if (confirmPassword && confirmPassword.hasError('passwordMismatch')) {
+        const errors = { ...confirmPassword.errors };
+        delete errors['passwordMismatch'];
+        const hasOtherErrors = Object.keys(errors).length > 0;
+        confirmPassword.setErrors(hasOtherErrors ? errors : null);
+      }
+      return null;
+    }
   }
 
   ngOnInit(): void {
-    // 저장된 보안접속 설정 불러오기
-    this.secureConnection = this.securityService.isSecureConnectionEnabled();
-    this.isHttps = this.securityService.isHttps();
-    this.isLocalhost = window.location.hostname === 'localhost';
-    this.checkSecureConnectionStatus();
-  }
-
-  checkSecureConnectionStatus(): void {
-    if (this.secureConnection && !this.isHttps) {
-      console.warn('보안접속이 활성화되어 있지만 HTTPS를 사용하지 않고 있습니다.');
-    }
-  }
-
-  onSecureConnectionChange(enabled: boolean): void {
-    this.secureConnection = enabled;
-    this.securityService.setSecureConnection(enabled);
-    
-    if (enabled && !this.isHttps) {
-      // HTTPS로 리다이렉트 (서버가 HTTPS를 지원하는 경우)
-      this.securityService.enforceHttps();
-    }
   }
 
   onSubmit(): void {
