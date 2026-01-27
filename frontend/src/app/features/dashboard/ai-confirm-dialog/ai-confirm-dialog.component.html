@@ -57,18 +57,18 @@
       <span matTextSuffix>원</span>
     </mat-form-field>
 
-    <!-- 날짜 -->
-    <mat-form-field appearance="outline">
-      <mat-label>날짜</mat-label>
-      <input matInput [matDatepicker]="picker" formControlName="transactionDate">
-      <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
-      <mat-datepicker #picker></mat-datepicker>
-    </mat-form-field>
-
     <!-- 메모 -->
     <mat-form-field appearance="outline">
       <mat-label>메모</mat-label>
       <input matInput formControlName="memo" placeholder="메모 (선택)">
+    </mat-form-field>
+
+    <!-- 날짜 -->
+    <mat-form-field appearance="outline">
+      <mat-label>날짜</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="transactionDate" (click)="picker.open()" readonly>
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
     </mat-form-field>
   </form>
 </mat-dialog-content>
