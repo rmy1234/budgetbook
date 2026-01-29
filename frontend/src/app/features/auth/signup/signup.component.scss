@@ -1,36 +1,159 @@
+// 배경 및 컨테이너
 .signup-container {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #ffffff;
-  padding: 20px;
+  width: 100%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  padding: 40px 20px;
 }
 
-.signup-wrapper {
+// 애니메이션 배경
+.animated-background {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 400px;
+  height: 100%;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.grid-pattern {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridMove 20s linear infinite;
+  opacity: 0.5;
+}
+
+@keyframes gridMove {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(50px, 50px);
+  }
+}
+
+.floating-cards {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.floating-card {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+  animation: float 15s ease-in-out infinite;
+  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.3s ease;
+
+  &:hover {
+    opacity: 0.8;
+  }
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    color: rgba(255, 255, 255, 0.7);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.4;
+  }
+  25% {
+    transform: translateY(-20px) rotate(5deg);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-40px) rotate(-5deg);
+    opacity: 0.5;
+  }
+  75% {
+    transform: translateY(-20px) rotate(3deg);
+    opacity: 0.6;
+  }
+}
+
+// 회원가입 카드
+.signup-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 500px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 48px 40px;
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  animation: cardAppear 0.6s ease-out;
+
+  @media (max-width: 768px) {
+    padding: 32px 24px;
+    border-radius: 12px;
+  }
+}
+
+@keyframes cardAppear {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .signup-title {
   text-align: center;
   font-size: 32px;
-  font-weight: bold;
-  color: #000000;
-  margin-bottom: 40px;
-  margin-top: 0;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 8px 0;
+}
+
+.signup-subtitle {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 32px 0;
 }
 
 .signup-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .email-input-wrapper {
@@ -50,7 +173,7 @@
 }
 
 .password-input {
-  padding-right: 45px;
+  padding-right: 50px;
 }
 
 .btn-toggle-password {
@@ -59,16 +182,18 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px;
+  padding: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #666;
-  transition: color 0.3s;
+  transition: all 0.3s ease;
   z-index: 1;
+  border-radius: 4px;
 
   &:hover {
-    color: #3f51b5;
+    color: #2196F3;
+    background: rgba(33, 150, 243, 0.1);
   }
 
   &:focus {
@@ -85,40 +210,77 @@
 }
 
 .btn-check-email {
-  padding: 14px 20px;
-  background-color: #3f51b5;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
   color: #ffffff;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   min-width: 100px;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover:not(:disabled) {
-    background-color: #303f9f;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   &:disabled {
-    background-color: #ccc;
+    background: #ccc;
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .checking-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    mat-icon {
+      animation: spin 1s linear infinite;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
   }
 }
 
 .form-input {
   width: 100%;
-  padding: 14px 16px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
+  padding: 16px 18px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
   font-size: 16px;
   box-sizing: border-box;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
+  background: #ffffff;
 
   &:focus {
     outline: none;
-    border-color: #3f51b5;
+    border-color: #2196F3;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    transform: translateY(-2px);
   }
 
   &.error {
@@ -126,11 +288,17 @@
     
     &:focus {
       border-color: #f44336;
+      box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
     }
   }
 
   &::placeholder {
     color: #999;
+    transition: opacity 0.3s ease;
+  }
+
+  &:focus::placeholder {
+    opacity: 0.5;
   }
 
   &[type="number"] {
@@ -149,14 +317,14 @@
 
 .error-message {
   color: #f44336;
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 4px;
   padding-left: 4px;
   animation: fadeIn 0.3s ease-in;
 }
 
 .email-check-message {
-  font-size: 12px;
+  font-size: 13px;
   margin-top: 4px;
   padding-left: 4px;
   animation: fadeIn 0.3s ease-in;
@@ -181,71 +349,103 @@
   }
 }
 
-.form-options {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  margin: 8px 0;
-}
-
-.links {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.link {
-  font-size: 14px;
-  color: #666;
-  text-decoration: none;
-  cursor: pointer;
-
-  &:hover {
-    color: #3f51b5;
-    text-decoration: underline;
-  }
-}
-
-.separator {
-  color: #ccc;
-  font-size: 14px;
-}
-
 .btn-primary,
 .btn-secondary {
   width: 100%;
   padding: 16px;
   border: none;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-primary {
-  background-color: #3f51b5;
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
   color: #ffffff;
   margin-top: 8px;
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
 
   &:hover:not(:disabled) {
-    background-color: #303f9f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.4);
+    background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
   }
 
   &:disabled {
-    background-color: #ccc;
+    background: #ccc;
     cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    mat-icon {
+      animation: spin 1s linear infinite;
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
   }
 }
 
-.btn-secondary {
-  background-color: #ffffff;
-  color: #3f51b5;
-  border: 1px solid #3f51b5;
-  margin-top: 4px;
+.login-link-section {
+  text-align: center;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.login-link-text {
+  font-size: 14px;
+  color: #666;
+  margin-right: 8px;
+}
+
+.login-link {
+  font-size: 14px;
+  color: #2196F3;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s ease;
 
   &:hover {
-    background-color: #e8eaf6;
+    color: #1976D2;
+    text-decoration: underline;
+  }
+}
+
+// 반응형 디자인
+@media (max-width: 768px) {
+  .signup-container {
+    padding: 20px;
+  }
+
+  .signup-card {
+    max-width: 100%;
+    padding: 32px 24px;
+  }
+
+  .signup-title {
+    font-size: 28px;
+  }
+
+  .btn-check-email {
+    min-width: 90px;
+    padding: 16px 16px;
+    font-size: 13px;
   }
 }

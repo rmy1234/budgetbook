@@ -1,6 +1,21 @@
 <div class="signup-container">
-  <div class="signup-wrapper">
-    <h1 class="signup-title">회원가입</h1>
+  <!-- 배경 애니메이션 -->
+  <div class="animated-background">
+    <div class="grid-pattern"></div>
+    <div class="floating-cards">
+      <div class="floating-card" *ngFor="let card of floatingCards; let i = index" 
+           [style.animation-delay]="card.delay + 's'"
+           [style.left]="card.left + '%'"
+           [style.top]="card.top + '%'">
+        <mat-icon>{{ card.icon }}</mat-icon>
+      </div>
+    </div>
+  </div>
+
+  <!-- 메인 콘텐츠 -->
+  <div class="signup-card">
+    <h2 class="signup-title">회원가입</h2>
+    <p class="signup-subtitle">BudgetBook에 오신 것을 환영합니다</p>
     
     <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="signup-form">
       <div class="form-field">
@@ -41,7 +56,10 @@
             class="btn-check-email"
             (click)="checkEmailDuplicate()"
             [disabled]="checkingEmail || !signupForm.get('email')?.value || signupForm.get('email')?.invalid">
-            {{ checkingEmail ? '확인 중...' : '중복확인' }}
+            <span *ngIf="!checkingEmail">중복확인</span>
+            <span *ngIf="checkingEmail" class="checking-spinner">
+              <mat-icon>hourglass_empty</mat-icon>
+            </span>
           </button>
         </div>
         <span class="error-message" *ngIf="getErrorMessage('email')">
@@ -97,27 +115,21 @@
         </span>
       </div>
       
-      <div class="form-options">
-        <div class="links">
-          <a href="#" class="link">아이디 찾기</a>
-          <span class="separator">|</span>
-          <a href="#" class="link">비밀번호 찾기</a>
-        </div>
-      </div>
-      
       <button 
         type="submit" 
         class="btn-primary"
-        [disabled]="signupForm.invalid || loading">
-        {{ loading ? '가입 중...' : '회원가입' }}
+        [disabled]="signupForm.invalid || loading || (emailChecked && !emailAvailable)">
+        <span *ngIf="!loading">회원가입</span>
+        <span *ngIf="loading" class="loading-spinner">
+          <mat-icon>hourglass_empty</mat-icon>
+          가입 중...
+        </span>
       </button>
       
-      <button 
-        type="button" 
-        class="btn-secondary"
-        routerLink="/auth/login">
-        로그인
-      </button>
+      <div class="login-link-section">
+        <span class="login-link-text">이미 계정이 있으신가요?</span>
+        <a routerLink="/auth/login" class="login-link">로그인</a>
+      </div>
     </form>
   </div>
 </div>

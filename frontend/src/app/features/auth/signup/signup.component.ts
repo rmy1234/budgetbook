@@ -26,6 +26,26 @@ export class SignupComponent implements OnInit {
   emailCheckMessage = '';
   showPassword = false;
   showConfirmPassword = false;
+  floatingCards: Array<{ delay: number; left: number; top: number; icon: string }> = [];
+  
+  // 예산 관리 관련 아이콘 목록
+  private budgetIcons = [
+    'savings',
+    'account_balance',
+    'attach_money',
+    'trending_up',
+    'pie_chart',
+    'account_balance_wallet',
+    'receipt_long',
+    'analytics',
+    'insights',
+    'calculate',
+    'monetization_on',
+    'credit_card',
+    'payments',
+    'wallet',
+    'bar_chart'
+  ];
 
   constructor(
     private fb: FormBuilder,
@@ -87,12 +107,28 @@ export class SignupComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    // 배경 애니메이션용 카드 생성
+    this.generateFloatingCards();
+    
     // 이메일 입력 시 중복확인 상태 초기화
     this.signupForm.get('email')?.valueChanges.subscribe(() => {
       this.emailChecked = false;
       this.emailAvailable = null;
       this.emailCheckMessage = '';
     });
+  }
+
+  generateFloatingCards(): void {
+    // 15개의 떠다니는 카드 생성 (아이콘 포함)
+    for (let i = 0; i < 15; i++) {
+      const randomIcon = this.budgetIcons[Math.floor(Math.random() * this.budgetIcons.length)];
+      this.floatingCards.push({
+        delay: Math.random() * 5,
+        left: Math.random() * 100,
+        top: Math.random() * 100,
+        icon: randomIcon
+      });
+    }
   }
 
   togglePasswordVisibility(): void {
